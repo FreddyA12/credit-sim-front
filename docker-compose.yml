@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit_sim_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - front_net
+
+networks:
+  front_net:
+    driver: bridge
