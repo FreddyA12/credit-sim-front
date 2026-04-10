@@ -11,8 +11,19 @@ export const useCreditStore = defineStore('credit', () => {
     creditTypes.value = data;
   }
 
+  async function fetchPublicTypes(slug: string) {
+    const { data } = await api.get(`/public/${slug}/credit-types`);
+    creditTypes.value = data;
+  }
+
   async function simulate(payload: object) {
     const { data } = await api.post('/credits/simulate', payload);
+    simulation.value = data;
+    return data;
+  }
+
+  async function simulatePublic(slug: string, payload: object) {
+    const { data } = await api.post(`/public/${slug}/simulate/credit`, payload);
     simulation.value = data;
     return data;
   }
@@ -23,17 +34,17 @@ export const useCreditStore = defineStore('credit', () => {
     return data;
   }
 
-  async function updateType(id: number, payload: object) {
+  async function updateType(id: string, payload: object) {
     const { data } = await api.put(`/credit-types/${id}`, payload);
     const idx = creditTypes.value.findIndex((t) => t.id === id);
     if (idx !== -1) creditTypes.value[idx] = data;
     return data;
   }
 
-  async function deleteType(id: number) {
+  async function deleteType(id: string) {
     await api.delete(`/credit-types/${id}`);
     creditTypes.value = creditTypes.value.filter((t) => t.id !== id);
   }
 
-  return { creditTypes, simulation, fetchTypes, simulate, createType, updateType, deleteType };
+  return { creditTypes, simulation, fetchTypes, fetchPublicTypes, simulate, simulatePublic, createType, updateType, deleteType };
 });
