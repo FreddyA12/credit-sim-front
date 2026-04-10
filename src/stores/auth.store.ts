@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '../services/auth.service';
 
-export interface AuthUser { id: number; name: string; email: string; role: 'admin' | 'client' }
+export interface AuthUser { id: string; name: string; email: string; role: 'superadmin' | 'admin'; institutionId: string | null }
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'));
@@ -10,17 +10,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value);
   const isAdmin = computed(() => user.value?.role === 'admin');
+  const isSuperAdmin = computed(() => user.value?.role === 'superadmin');
 
   async function login(email: string, password: string) {
     const { data } = await authService.login({ email, password });
-    token.value = data.access_token;
-    user.value = data.user;
-    localStorage.setItem('token', data.access_token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-  }
-
-  async function register(name: string, email: string, password: string) {
-    const { data } = await authService.register({ name, email, password });
     token.value = data.access_token;
     user.value = data.user;
     localStorage.setItem('token', data.access_token);
@@ -34,5 +27,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user');
   }
 
-  return { token, user, isAuthenticated, isAdmin, login, register, logout };
+  return { token, user, isAuthenticated, isAdmin, isSuperAdmin, login, logout };
 });
