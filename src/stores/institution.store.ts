@@ -3,7 +3,8 @@ import { ref } from 'vue';
 import api from '../services/api';
 
 export interface Institution {
-  id: number;
+  id: string;
+  slug: string;
   name: string;
   type: string;
   ruc: string;
@@ -24,6 +25,11 @@ export const useInstitutionStore = defineStore('institution', () => {
     institution.value = data;
   }
 
+  async function fetchBySlug(slug: string) {
+    const { data } = await api.get(`/public/${slug}`);
+    institution.value = data;
+  }
+
   async function update(payload: Partial<Institution>) {
     const { data } = await api.put('/institution', payload);
     institution.value = data;
@@ -31,10 +37,10 @@ export const useInstitutionStore = defineStore('institution', () => {
 
   async function uploadLogo(file: File) {
     const form = new FormData();
-    form.append('logo', file);
+    form.append('file', file);
     const { data } = await api.post('/institution/logo', form);
-    institution.value = data;
+    if (institution.value) institution.value.logoUrl = data.logoUrl;
   }
 
-  return { institution, fetch, update, uploadLogo };
+  return { institution, fetch, fetchBySlug, update, uploadLogo };
 });
