@@ -23,7 +23,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="font-semibold text-gray-800">{{ app.creditType?.name || 'Crédito' }}</p>
-                  <p class="text-sm text-gray-500">Monto: <strong>${{ Number(app.requestedAmount).toFixed(2) }}</strong> · {{ app.termMonths }} meses</p>
+                  <p class="text-sm text-gray-500">Monto: <strong>${{ Number(app.amount).toFixed(2) }}</strong> · {{ app.termMonths }} meses</p>
                   <p class="text-xs text-gray-400">{{ new Date(app.createdAt).toLocaleDateString('es-EC') }}</p>
                 </div>
                 <Tag :value="statusLabel(app.status)" :severity="statusSeverity(app.status)" />

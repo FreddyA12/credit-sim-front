@@ -2,19 +2,26 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800">Tipos de Crédito</h1>
-      <Button label="Nuevo tipo" icon="pi pi-plus" @click="openDialog()" />
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <ToggleSwitch v-model="showInactive" />
+          <label class="text-sm text-gray-500">Mostrar inactivos</label>
+        </div>
+        <Button label="Nuevo tipo" icon="pi pi-plus" @click="openDialog()" />
+      </div>
     </div>
 
-    <DataTable :value="creditTypes" :loading="loading" stripedRows>
+    <DataTable :value="filteredTypes" :loading="loading" stripedRows>
       <Column field="name" header="Nombre" />
-      <Column field="bceSegment" header="Segmento BCE" />
+      <Column header="Segmento BCE">
+        <template #body="{ data }">{{ segmentLabel(data.bceSegment) }}</template>
+      </Column>
       <Column header="Tasa anual">
         <template #body="{ data }">{{ data.annualRate }}%</template>
       </Column>
       <Column header="Tasa máx. JPRF">
         <template #body="{ data }">{{ data.maxJprfRate }}%</template>
       </Column>
-      <Column field="amortizationSystem" header="Amortización" />
       <Column header="Activo">
         <template #body="{ data }">
           <Tag :value="data.active ? 'Activo' : 'Inactivo'" :severity="data.active ? 'success' : 'danger'" />
@@ -37,39 +44,35 @@
       <form @submit.prevent="save" class="grid grid-cols-2 gap-4 pt-2">
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nombre</label>
-          <InputText v-model="form.name" />
+          <InputText v-model="form.name" class="w-full" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Segmento BCE</label>
           <Select v-model="form.bceSegment" :options="segmentOptions" optionLabel="label" optionValue="value" />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Sistema de amortización</label>
-          <Select v-model="form.amortizationSystem" :options="[{label:'Francés',value:'french'},{label:'Alemán',value:'german'}]" optionLabel="label" optionValue="value" />
-        </div>
-        <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa anual (%)</label>
-          <InputNumber v-model="form.annualRate" :min="0" :max="100" :minFractionDigits="2" />
+          <InputNumber v-model="form.annualRate" :min="0" :max="100" :minFractionDigits="2" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa máx. JPRF (%)</label>
-          <InputNumber v-model="form.maxJprfRate" :min="0" :max="100" :minFractionDigits="2" />
+          <InputNumber v-model="form.maxJprfRate" :min="0" :max="100" :minFractionDigits="2" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto mínimo (USD)</label>
-          <InputNumber v-model="form.minAmount" :min="0" />
+          <InputNumber v-model="form.minAmount" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto máximo (USD)</label>
-          <InputNumber v-model="form.maxAmount" :min="0" />
+          <InputNumber v-model="form.maxAmount" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo mínimo (meses)</label>
-          <InputNumber v-model="form.minTermMonths" :min="1" />
+          <InputNumber v-model="form.minTermMonths" :min="1" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo máximo (meses)</label>
-          <InputNumber v-model="form.maxTermMonths" :min="1" />
+          <InputNumber v-model="form.maxTermMonths" :min="1" fluid />
         </div>
         <div class="col-span-2 flex items-center gap-2">
           <Checkbox v-model="form.active" :binary="true" />
@@ -85,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -96,6 +99,7 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select';
+import ToggleSwitch from 'primevue/toggleswitch';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useCreditStore } from '../../stores/credit.store';
@@ -105,11 +109,19 @@ const confirm = useConfirm();
 const creditStore = useCreditStore();
 const { creditTypes } = storeToRefs(creditStore);
 const loading = ref(false);
+const showInactive = ref(false);
+const filteredTypes = computed(() =>
+  showInactive.value ? creditTypes.value : creditTypes.value.filter((t) => t.active),
+);
 const dialogVisible = ref(false);
 const saving = ref(false);
 const editingId = ref<string | null>(null);
 
-const emptyForm = () => ({ name: '', bceSegment: 'consumo', amortizationSystem: 'french', annualRate: 0, maxJprfRate: 0, minAmount: 0, maxAmount: 0, minTermMonths: 1, maxTermMonths: 60, active: true });
+function segmentLabel(value: string) {
+  return segmentOptions.find((o) => o.value === value)?.label ?? value;
+}
+
+const emptyForm = () => ({ name: '', bceSegment: 'consumo', annualRate: 0, maxJprfRate: 0, minAmount: 0, maxAmount: 0, minTermMonths: 1, maxTermMonths: 60, active: true });
 const form = ref(emptyForm());
 
 const segmentOptions = [
