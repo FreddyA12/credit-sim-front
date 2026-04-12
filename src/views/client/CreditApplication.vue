@@ -36,22 +36,22 @@
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Monto solicitado (USD)</label>
-                <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" />
+                <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Plazo (meses)</label>
-                <InputNumber v-model="form.termMonths" :min="1" :max="360" />
+                <InputNumber v-model="form.termMonths" :min="1" :max="360" fluid />
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
-                <InputNumber v-model="form.monthlyIncome" :min="0" mode="currency" currency="USD" locale="es-EC" />
+                <InputNumber v-model="form.monthlyIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
               </div>
             </div>
             <Button label="Simular crédito" icon="pi pi-calculator" :loading="simulating" @click="runSimulation" />
             <div v-if="simResult" class="bg-green-50 border border-green-200 rounded-lg p-4">
               <p class="font-semibold text-green-800 mb-2">Resultado de la simulación</p>
               <div class="grid grid-cols-2 gap-2 text-sm">
-                <div>Primera cuota: <strong>${{ simResult.summary.firstInstallment?.toFixed(2) }}</strong></div>
+                <div>{{ simResult.summary.amortizationSystem === 'french' ? 'Cuota mensual' : 'Primera cuota' }}: <strong>${{ simResult.summary.firstInstallment?.toFixed(2) }}</strong></div>
                 <div>Tasa aplicada: <strong>{{ simResult.summary.annualRatePct }}%</strong></div>
                 <div>Total a pagar: <strong>${{ simResult.summary.totalCreditCost?.toFixed(2) }}</strong></div>
                 <div>Total intereses: <strong>${{ simResult.summary.totalInterest?.toFixed(2) }}</strong></div>
@@ -145,15 +145,17 @@ function onFileSelect(key: string, event: Event) {
   if (file) docFiles.value[key] = file;
 }
 
+const state = history.state ?? {};
 const form = ref({
   clientName: '',
   idNumber: '',
   clientPhone: '',
   clientEmail: '',
-  creditTypeId: null as any,
-  amount: 5000,
-  termMonths: 24,
-  monthlyIncome: 0,
+  creditTypeId: state.creditTypeId ?? null,
+  amount: state.amount ?? null,
+  termMonths: state.termMonths ?? null,
+  monthlyIncome: state.monthlyIncome ?? null,
+  amortizationSystem: state.amortizationSystem ?? 'french',
 });
 
 onMounted(() => creditStore.fetchPublicTypes(slug.value));
@@ -167,7 +169,7 @@ async function runSimulation() {
       creditTypeId: form.value.creditTypeId,
       amount: form.value.amount,
       termMonths: form.value.termMonths,
-      system: selectedType?.amortizationSystem ?? 'french',
+      system: form.value.amortizationSystem,
       monthlyIncome: form.value.monthlyIncome || undefined,
     });
   } catch (e: any) {
