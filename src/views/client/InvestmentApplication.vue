@@ -35,11 +35,11 @@
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Monto (USD)</label>
-                <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" />
+                <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Plazo (días)</label>
-                <InputNumber v-model="form.termDays" :min="1" />
+                <InputNumber v-model="form.termDays" :min="1" fluid />
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Origen de los fondos</label>
@@ -151,14 +151,15 @@ const fundsOptions = [
   { label: 'Otro', value: 'otro' },
 ];
 
+const state = history.state ?? {};
 const form = ref({
   clientName: '',
   idNumber: '',
   clientPhone: '',
   clientEmail: '',
-  productId: null as any,
-  amount: 1000,
-  termDays: 90,
+  productId: state.productId ?? null,
+  amount: state.amount ?? null,
+  termDays: state.termDays ?? null,
   fundsOrigin: '',
   pepDeclared: false,
 });
