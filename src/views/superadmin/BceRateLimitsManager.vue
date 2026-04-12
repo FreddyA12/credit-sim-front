@@ -1,50 +1,60 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Límites de Tasas del BCE</h1>
-      <Button label="Actualizar Límites" icon="pi pi-refresh" @click="showEditDialog(null)" />
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header>
+        <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Regulación</p>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Límites de tasas del BCE</h1>
+        <p class="mt-1 max-w-2xl text-sm text-slate-600">
+          Referencia oficial para rangos de plazo y tasas permitidas a instituciones.
+        </p>
+      </header>
+      <Button label="Actualizar límites" icon="pi pi-refresh" class="shrink-0" @click="showEditDialog(null)" />
     </div>
 
-    <Message severity="info" :closable="false" class="mb-4">
-      <span class="font-medium">Tasas referenciales del Banco Central del Ecuador.</span>
-      Estas tasas definen los límites mínimos y máximos que las instituciones pueden ofrecer en cada rango de plazo.
-    </Message>
+    <div class="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+      <span class="font-medium text-slate-800">Tasas referenciales del Banco Central del Ecuador.</span>
+      Definen los límites mínimos y máximos que las instituciones pueden ofrecer en cada rango de plazo.
+    </div>
 
-    <DataTable :value="limits" :loading="loading" stripedRows>
-      <Column header="Rango de Plazo (días)" :sortable="true">
-        <template #body="{ data }">
-          <span class="font-medium">{{ data.minDays }} - {{ data.maxDays || '∞' }} días</span>
-        </template>
-      </Column>
-      <Column field="bceReferenceRate" header="Tasa Máxima BCE (%)" :sortable="true">
-        <template #body="{ data }">
-          <span class="font-semibold text-blue-600">{{ data.bceReferenceRate }}%</span>
-        </template>
-      </Column>
-      <Column header="Rango Permitido">
-        <template #body="{ data }">
-          <span class="text-sm">
-            Mín: <strong>{{ data.minAllowedRate }}%</strong> —
-            Máx: <strong>{{ data.maxAllowedRate }}%</strong>
-          </span>
-        </template>
-      </Column>
-      <Column field="bceCircular" header="Circular BCE">
-        <template #body="{ data }">
-          <span class="text-xs text-gray-600">{{ data.bceCircular }}</span>
-        </template>
-      </Column>
-      <Column header="Estado">
-        <template #body="{ data }">
-          <Tag :value="data.active ? 'Activo' : 'Inactivo'" :severity="data.active ? 'success' : 'danger'" />
-        </template>
-      </Column>
-      <Column header="Acciones">
-        <template #body="{ data }">
-          <Button icon="pi pi-pencil" size="small" severity="info" text rounded @click="showEditDialog(data)" v-tooltip.top="'Editar'" />
-        </template>
-      </Column>
-    </DataTable>
+    <Card class="border-slate-200 shadow-sm">
+      <template #content>
+        <DataTable :value="limits" :loading="loading" stripedRows>
+          <Column header="Rango de Plazo (días)" :sortable="true">
+            <template #body="{ data }">
+              <span class="font-medium">{{ data.minDays }} - {{ data.maxDays || '∞' }} días</span>
+            </template>
+          </Column>
+          <Column field="bceReferenceRate" header="Tasa Máxima BCE (%)" :sortable="true">
+            <template #body="{ data }">
+              <span class="font-semibold text-slate-900">{{ data.bceReferenceRate }}%</span>
+            </template>
+          </Column>
+          <Column header="Rango Permitido">
+            <template #body="{ data }">
+              <span class="text-sm">
+                Mín: <strong>{{ data.minAllowedRate }}%</strong> —
+                Máx: <strong>{{ data.maxAllowedRate }}%</strong>
+              </span>
+            </template>
+          </Column>
+          <Column field="bceCircular" header="Circular BCE">
+            <template #body="{ data }">
+              <span class="text-xs text-slate-600">{{ data.bceCircular }}</span>
+            </template>
+          </Column>
+          <Column header="Estado">
+            <template #body="{ data }">
+              <Tag :value="data.active ? 'Activo' : 'Inactivo'" :severity="data.active ? 'success' : 'danger'" />
+            </template>
+          </Column>
+          <Column header="Acciones">
+            <template #body="{ data }">
+              <Button icon="pi pi-pencil" size="small" severity="secondary" text rounded @click="showEditDialog(data)" v-tooltip.top="'Editar'" />
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
 
     <!-- Dialog de edición -->
     <Dialog v-model:visible="editDialogVisible" modal :header="editingLimit ? 'Editar Límite' : 'Actualizar Todos los Límites'" :style="{ width: '600px' }">
@@ -104,6 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
