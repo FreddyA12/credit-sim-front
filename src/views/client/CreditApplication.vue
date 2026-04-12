@@ -6,55 +6,163 @@
 
       <Card>
         <template #content>
-          <div v-if="activeStep === 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <h2 class="col-span-2 text-lg font-semibold">Datos del solicitante</h2>
-            <div class="flex flex-col gap-1 col-span-2">
-              <label class="text-sm font-medium">Nombre completo *</label>
-              <InputText v-model="form.clientName" />
+          <div v-if="activeStep === 0" class="flex flex-col gap-6">
+            <h2 class="text-lg font-semibold">Datos del solicitante</h2>
+
+            <!-- Si NO viene del simulador, primero debe seleccionar el tipo de crédito -->
+            <div v-if="!comesFromSimulator" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <label class="text-sm font-medium text-yellow-900 mb-2 block">
+                <i class="pi pi-info-circle mr-1"></i>
+                Primero seleccione el tipo de crédito que desea solicitar *
+              </label>
+              <Select
+                v-model="form.creditTypeId"
+                :options="creditTypes"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Seleccione un tipo de crédito..."
+                class="w-full"
+              />
             </div>
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium">Cédula de identidad *</label>
-              <InputText v-model="form.idNumber" @blur="checkCedula(form.idNumber)" :class="{ 'p-invalid': cedulaError }" maxlength="10" />
-              <small class="text-red-500">{{ cedulaError }}</small>
+
+            <!-- Si YA viene del simulador, mostrar tipo seleccionado (no editable) -->
+            <div v-else class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p class="text-sm text-blue-900">
+                <i class="pi pi-check-circle mr-1"></i>
+                Tipo de crédito seleccionado: <strong>{{ selectedCreditType?.name }}</strong>
+              </p>
             </div>
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium">Teléfono</label>
-              <InputText v-model="form.clientPhone" />
+
+            <!-- Formulario de datos personales (solo se muestra si ya hay tipo seleccionado) -->
+            <div v-if="form.creditTypeId" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1 col-span-2">
+                <label class="text-sm font-medium">Nombre completo *</label>
+                <InputText v-model="form.clientName" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">{{ idLabel }} *</label>
+                <InputText
+                  v-model="form.idNumber"
+                  @blur="validateIdNumber"
+                  :class="{ 'p-invalid': idError }"
+                  :maxlength="idMaxLength"
+                  :placeholder="idPlaceholder"
+                />
+                <small class="text-red-500">{{ idError }}</small>
+                <small v-if="selectedCreditType" class="text-gray-500">
+                  {{ selectedCreditType.idType === 'ruc' ? 'Ingrese su RUC de 13 dígitos' : 'Ingrese su cédula de 10 dígitos' }}
+                </small>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Teléfono</label>
+                <InputText v-model="form.clientPhone" />
+              </div>
+              <div class="flex flex-col gap-1 col-span-2">
+                <label class="text-sm font-medium">Correo electrónico</label>
+                <InputText v-model="form.clientEmail" type="email" />
+              </div>
             </div>
-            <div class="flex flex-col gap-1 col-span-2">
-              <label class="text-sm font-medium">Correo electrónico</label>
-              <InputText v-model="form.clientEmail" type="email" />
+
+            <!-- Mensaje si aún no seleccionó tipo de crédito -->
+            <div v-else class="text-center text-gray-500 py-8">
+              <i class="pi pi-arrow-up text-3xl mb-2"></i>
+              <p>Seleccione un tipo de crédito para continuar</p>
             </div>
           </div>
 
-          <div v-else-if="activeStep === 1" class="flex flex-col gap-4">
-            <h2 class="text-lg font-semibold">Detalle del crédito</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Tipo de crédito</label>
-                <Select v-model="form.creditTypeId" :options="creditTypes" optionLabel="name" optionValue="id" @change="simResult = null" />
+          <div v-else-if="activeStep === 1" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Panel 1: Análisis de Capacidad de Pago -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 h-fit">
+              <h2 class="text-lg font-semibold text-blue-900 mb-4">
+                <i class="pi pi-chart-line mr-2"></i>Análisis de Capacidad de Pago
+              </h2>
+              <div class="grid grid-cols-1 gap-4">
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Ingresos netos mensuales (USD) *</label>
+                  <InputNumber v-model="form.monthlyIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Gastos mensuales fijos (USD)</label>
+                  <InputNumber v-model="form.monthlyExpenses" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                  <small class="text-gray-500">Alimentación, servicios, arriendo, etc.</small>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Otras deudas mensuales (USD)</label>
+                  <InputNumber v-model="form.otherDebts" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                  <small class="text-gray-500">Cuotas de otros créditos, tarjetas, etc.</small>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Patrimonio neto total (USD)</label>
+                  <InputNumber v-model="form.netWorth" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                  <small class="text-gray-500">Bienes, ahorros, inversiones menos deudas</small>
+                </div>
               </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Monto solicitado (USD)</label>
-                <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Plazo (meses)</label>
-                <InputNumber v-model="form.termMonths" :min="1" :max="360" fluid />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
-                <InputNumber v-model="form.monthlyIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+
+              <!-- Resultado de capacidad de pago -->
+              <div v-if="paymentCapacity !== null" class="mt-4 p-3 bg-white border border-blue-300 rounded">
+                <p class="text-sm font-semibold text-blue-900">
+                  <i class="pi pi-info-circle mr-1"></i>
+                  Según su situación financiera, puede pagar hasta:
+                </p>
+                <p class="text-2xl font-bold text-blue-700 mt-1">${{ paymentCapacity.toFixed(2) }} USD/mes</p>
+                <small class="text-gray-600">
+                  Cálculo: (Ingresos ${{ (form.monthlyIncome || 0).toFixed(2) }} - Gastos ${{ (form.monthlyExpenses || 0).toFixed(2) }} - Otras deudas ${{ (form.otherDebts || 0).toFixed(2) }}) × 40%
+                </small>
               </div>
             </div>
-            <Button label="Simular crédito" icon="pi pi-calculator" :loading="simulating" @click="runSimulation" />
-            <div v-if="simResult" class="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p class="font-semibold text-green-800 mb-2">Resultado de la simulación</p>
-              <div class="grid grid-cols-2 gap-2 text-sm">
-                <div>{{ simResult.summary.amortizationSystem === 'french' ? 'Cuota mensual' : 'Primera cuota' }}: <strong>${{ simResult.summary.firstInstallment?.toFixed(2) }}</strong></div>
-                <div>Tasa aplicada: <strong>{{ simResult.summary.annualRatePct }}%</strong></div>
-                <div>Total a pagar: <strong>${{ simResult.summary.totalCreditCost?.toFixed(2) }}</strong></div>
-                <div>Total intereses: <strong>${{ simResult.summary.totalInterest?.toFixed(2) }}</strong></div>
+
+            <!-- Panel 2: Detalle del Crédito -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 h-fit">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="pi pi-credit-card mr-2"></i>Detalle del Crédito
+              </h2>
+              <div class="grid grid-cols-1 gap-4">
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Tipo de crédito *</label>
+                  <Select
+                    v-model="form.creditTypeId"
+                    :options="creditTypes"
+                    optionLabel="name"
+                    optionValue="id"
+                    @change="simResult = null"
+                    disabled
+                  />
+                  <small class="text-gray-500">El tipo de crédito se seleccionó en el Paso 1</small>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Monto solicitado (USD) *</label>
+                  <InputNumber v-model="form.amount" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium">Plazo (meses) *</label>
+                  <InputNumber v-model="form.termMonths" :min="1" :max="360" fluid />
+                </div>
+              </div>
+              <Button label="Simular crédito" icon="pi pi-calculator" :loading="simulating" @click="runSimulation" class="mt-4" />
+
+              <!-- Resultado de simulación -->
+              <div v-if="simResult" class="mt-4">
+                <div :class="exceedsCapacity ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'" class="border rounded-lg p-4">
+                  <p :class="exceedsCapacity ? 'text-red-800' : 'text-green-800'" class="font-semibold mb-2">
+                    <i :class="exceedsCapacity ? 'pi pi-times-circle' : 'pi pi-check-circle'" class="mr-1"></i>
+                    {{ exceedsCapacity ? 'Simulación NO aprobada' : 'Resultado de la simulación' }}
+                  </p>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>{{ simResult.summary.amortizationSystem === 'french' ? 'Cuota mensual' : 'Primera cuota' }}: <strong>${{ simResult.summary.firstInstallment?.toFixed(2) }}</strong></div>
+                    <div>Tasa aplicada: <strong>{{ simResult.summary.annualRatePct }}%</strong></div>
+                    <div>Total a pagar: <strong>${{ simResult.summary.totalCreditCost?.toFixed(2) }}</strong></div>
+                    <div>Total intereses: <strong>${{ simResult.summary.totalInterest?.toFixed(2) }}</strong></div>
+                  </div>
+
+                  <!-- Alerta si excede capacidad -->
+                  <div v-if="exceedsCapacity" class="mt-3 p-3 bg-red-100 border border-red-400 rounded">
+                    <p class="text-sm font-semibold text-red-900">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      La cuota mensual (${{ simResult.summary.firstInstallment?.toFixed(2) }}) supera su capacidad de pago (${{ paymentCapacity?.toFixed(2) }})
+                    </p>
+                    <p class="text-xs text-red-700 mt-1">Por favor, reduzca el monto solicitado o aumente el plazo.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -117,7 +225,7 @@ const slug = computed(() => route.params.slug as string);
 const toast = useToast();
 const creditStore = useCreditStore();
 const { creditTypes } = storeToRefs(creditStore);
-const { cedulaError, checkCedula } = useIdentityValidation();
+const { cedulaError, rucError, checkCedula, checkRuc } = useIdentityValidation();
 
 const activeStep = ref(0);
 const submitted = ref(false);
@@ -155,8 +263,90 @@ const form = ref({
   amount: state.amount ?? null,
   termMonths: state.termMonths ?? null,
   monthlyIncome: state.monthlyIncome ?? null,
+  monthlyExpenses: null,
+  otherDebts: null,
+  netWorth: null,
   amortizationSystem: state.amortizationSystem ?? 'french',
 });
+
+// Calcular capacidad de pago (40% del ingreso disponible)
+const paymentCapacity = computed(() => {
+  const income = form.value.monthlyIncome || 0;
+  const expenses = form.value.monthlyExpenses || 0;
+  const debts = form.value.otherDebts || 0;
+
+  if (income <= 0) return null;
+
+  const availableIncome = income - expenses - debts;
+  return availableIncome > 0 ? availableIncome * 0.4 : 0;
+});
+
+// Detectar si viene del simulador (si tiene creditTypeId en el state)
+const comesFromSimulator = computed(() => {
+  return !!state.creditTypeId;
+});
+
+// Verificar si la cuota excede la capacidad de pago
+const exceedsCapacity = computed(() => {
+  if (!simResult.value || paymentCapacity.value === null) return false;
+  const installment = simResult.value.summary.firstInstallment || 0;
+  return installment > paymentCapacity.value;
+});
+
+// Obtener el tipo de crédito seleccionado en el Panel 2
+const selectedCreditType = computed(() => {
+  return creditTypes.value.find((t) => t.id === form.value.creditTypeId);
+});
+
+// Tipo de identificación requerida según el tipo de crédito
+const requiredIdType = computed(() => {
+  return selectedCreditType.value?.idType || 'cedula';
+});
+
+// Label dinámico del campo de identificación
+const idLabel = computed(() => {
+  const idType = requiredIdType.value;
+  if (idType === 'ruc') return 'RUC (Registro Único de Contribuyentes)';
+  if (idType === 'both') return 'Cédula o RUC';
+  return 'Cédula de identidad';
+});
+
+// Longitud máxima del campo
+const idMaxLength = computed(() => {
+  return requiredIdType.value === 'ruc' ? 13 : (requiredIdType.value === 'both' ? 13 : 10);
+});
+
+// Placeholder del campo
+const idPlaceholder = computed(() => {
+  const idType = requiredIdType.value;
+  if (idType === 'ruc') return '1234567890001';
+  if (idType === 'both') return '1234567890 o 1234567890001';
+  return '1234567890';
+});
+
+// Error de validación (cédula o RUC)
+const idError = computed(() => {
+  return requiredIdType.value === 'ruc' ? rucError.value : cedulaError.value;
+});
+
+// Función de validación que llama a checkCedula o checkRuc según corresponda
+function validateIdNumber() {
+  const idType = requiredIdType.value;
+  const value = form.value.idNumber;
+
+  if (idType === 'ruc') {
+    return checkRuc(value);
+  } else if (idType === 'both') {
+    // Si acepta ambos, intentar validar según la longitud
+    if (value.length === 13) {
+      return checkRuc(value);
+    } else {
+      return checkCedula(value);
+    }
+  } else {
+    return checkCedula(value);
+  }
+}
 
 onMounted(() => creditStore.fetchPublicTypes(slug.value));
 
@@ -181,11 +371,29 @@ async function runSimulation() {
 
 function nextStep() {
   if (activeStep.value === 0) {
-    if (!form.value.clientName) return toast.add({ severity: 'warn', summary: 'Ingrese su nombre', life: 3000 });
-    if (!checkCedula(form.value.idNumber)) return;
+    if (!form.value.creditTypeId) {
+      return toast.add({ severity: 'warn', summary: 'Seleccione un tipo de crédito', life: 3000 });
+    }
+    if (!form.value.clientName) {
+      return toast.add({ severity: 'warn', summary: 'Ingrese su nombre', life: 3000 });
+    }
+    if (!validateIdNumber()) return;
   }
-  if (activeStep.value === 1 && !simResult.value) {
-    return toast.add({ severity: 'warn', summary: 'Debe simular el crédito antes de continuar', life: 3000 });
+  if (activeStep.value === 1) {
+    if (!form.value.monthlyIncome || form.value.monthlyIncome <= 0) {
+      return toast.add({ severity: 'warn', summary: 'Ingrese sus ingresos mensuales', life: 3000 });
+    }
+    if (!simResult.value) {
+      return toast.add({ severity: 'warn', summary: 'Debe simular el crédito antes de continuar', life: 3000 });
+    }
+    if (exceedsCapacity.value) {
+      return toast.add({
+        severity: 'error',
+        summary: 'Capacidad de pago insuficiente',
+        detail: `La cuota mensual ($${simResult.value.summary.firstInstallment?.toFixed(2)}) supera su capacidad de pago ($${paymentCapacity.value?.toFixed(2)}). Ajuste el monto o plazo.`,
+        life: 5000
+      });
+    }
   }
   activeStep.value++;
 }
@@ -210,6 +418,10 @@ async function submit() {
       appliedRate: simResult.value.summary.annualRatePct,
       scheduleJson: simResult.value.rows,
       monthlyIncome: form.value.monthlyIncome || undefined,
+      monthlyExpenses: form.value.monthlyExpenses || undefined,
+      otherDebts: form.value.otherDebts || undefined,
+      netWorth: form.value.netWorth || undefined,
+      maxPaymentCalc: paymentCapacity.value || undefined,
     };
     const { data: app } = await api.post(`/public/${slug.value}/credit-applications`, payload);
     const docTypeMap: Record<string, string> = { cedula: 'cedula', utility: 'utility_bill', income: 'income_proof' };

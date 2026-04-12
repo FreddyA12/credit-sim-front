@@ -1,5 +1,5 @@
 <template>
-  <div class="inst-page">
+  <div class="inst-page" :style="cssVars">
 
     <!-- ── Encabezado ── -->
     <div class="page-header">
@@ -265,11 +265,6 @@
             <h2 class="section-title">Paleta de colores</h2>
             <p class="section-desc">Define los colores de marca que se aplicarán en toda la plataforma</p>
           </div>
-          <!-- Botón restablecer -->
-          <button type="button" class="reset-btn" @click="resetColors" title="Restablecer colores por defecto">
-            <i class="pi pi-refresh" />
-            Restablecer
-          </button>
         </div>
 
         <form @submit.prevent="save">
@@ -360,7 +355,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 import Select from 'primevue/select';
@@ -370,15 +365,32 @@ import { useTheme } from '../../composables/useTheme';
 const toast = useToast();
 const institutionStore = useInstitutionStore();
 const { institution } = storeToRefs(institutionStore);
-const { applyTheme, applyThemeImmediate } = useTheme();
+const { applyTheme } = useTheme();
 const saving = ref(false);
 const uploadingLogo = ref(false);
 const localLogoPreview = ref<string | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const activeTab = ref<'general' | 'contact' | 'branding'>('general');
 
-const DEFAULT_PRIMARY   = '#1A3C6E';
-const DEFAULT_SECONDARY = '#F5A623';
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return `rgba(0,0,0,${alpha})`;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Colores de marca en vivo (formulario) o guardados, para iconos y focos de esta pantalla */
+const cssVars = computed(() => {
+  const p = form.value.primaryColor || institution.value?.primaryColor || '#1A3C6E';
+  const s = form.value.secondaryColor || institution.value?.secondaryColor || '#F5A623';
+  return {
+    '--inst-primary': p,
+    '--inst-secondary': s,
+    '--inst-primary-ring': hexToRgba(p, 0.18),
+  };
+});
 
 const tabs = [
   { key: 'general',  icon: 'pi pi-file-edit',  label: 'Información General' },
@@ -512,71 +524,6 @@ async function onFileChange(event: Event) {
   }
 }
 
-async function resetColors() {
-  saving.value = true;
-  try {
-    // 1. Limpiar localStorage ANTES de actualizar
-    if (window.localStorage) {
-      localStorage.removeItem('institution-primaryColor');
-      localStorage.removeItem('institution-secondaryColor');
-    }
-
-    // 2. Eliminar TODOS los estilos dinámicos existentes
-    document.querySelectorAll('#institution-theme').forEach(el => el.remove());
-
-    // 3. Actualizar en backend con los colores por defecto
-    await institutionStore.update({
-      primaryColor: DEFAULT_PRIMARY,
-      secondaryColor: DEFAULT_SECONDARY,
-    });
-
-    // 4. Refrescar desde el backend para asegurar sincronización
-    await institutionStore.fetch();
-
-    // 5. Actualizar el form local con los valores por defecto
-    form.value = {
-      ...form.value,
-      primaryColor: DEFAULT_PRIMARY,
-      secondaryColor: DEFAULT_SECONDARY,
-    };
-
-    // 6. Restaurar variables CSS en el root
-    const root = document.documentElement;
-    root.style.setProperty('--primary-color', DEFAULT_PRIMARY);
-    root.style.setProperty('--p-primary-color', DEFAULT_PRIMARY);
-    root.style.setProperty('--secondary-color', DEFAULT_SECONDARY);
-    root.style.setProperty('--p-primary-600', DEFAULT_SECONDARY);
-
-    // 7. Esperar a que Vue actualice el DOM completamente
-    await nextTick();
-
-    // 8. Eliminar nuevamente cualquier style que se haya creado por watchers automáticos
-    document.querySelectorAll('#institution-theme').forEach(el => el.remove());
-
-    // 9. Aplicar el tema INMEDIATAMENTE con los valores por defecto garantizados (sin debounce)
-    applyThemeImmediate();
-
-    // 10. Esperar nuevamente y forzar recálculo visual
-    await nextTick();
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-      // Forzar re-render de componentes PrimeVue
-      window.dispatchEvent(new CustomEvent('theme-reset'));
-    }, 100);
-
-    toast.add({
-      severity: 'success',
-      summary: 'Colores restablecidos',
-      detail: 'Se aplicaron los colores por defecto del sistema',
-      life: 3000
-    });
-  } catch (error: any) {
-    const detail = error?.response?.data?.message || 'No se pudo restablecer';
-    toast.add({ severity: 'error', summary: 'Error', detail, life: 4000 });
-  } finally {
-    saving.value = false;
-  }
-}
 </script>
 
 <style scoped>
@@ -585,6 +532,9 @@ async function resetColors() {
 ────────────────────────────────────────── */
 .inst-page {
   font-family: 'Poppins', sans-serif;
+  --inst-primary: #1a3c6e;
+  --inst-secondary: #f5a623;
+  --inst-primary-ring: rgba(26, 60, 110, 0.18);
 }
 
 /* ── Encabezado ── */
@@ -603,20 +553,20 @@ async function resetColors() {
 .page-header-icon {
   width: 2.8rem;
   height: 2.8rem;
-  background: #0a1628;
+  background: var(--inst-primary);
   border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #c9a84c;
+  color: #ffffff;
   font-size: 1.1rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(10, 22, 40, 0.2);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
 }
 .page-title {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #0a1628;
+  color: var(--inst-primary);
   margin: 0 0 0.15rem;
   letter-spacing: -0.03em;
 }
@@ -703,7 +653,7 @@ async function resetColors() {
   border-bottom: 1px solid #f1f5f9;
 }
 .section-icon {
-  color: #c9a84c;
+  color: var(--inst-primary);
   font-size: 1rem;
   margin-top: 0.15rem;
   flex-shrink: 0;
@@ -711,7 +661,7 @@ async function resetColors() {
 .section-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0a1628;
+  color: var(--inst-primary);
   margin: 0 0 0.2rem;
 }
 .section-desc {
@@ -741,7 +691,7 @@ async function resetColors() {
   letter-spacing: 0.01em;
 }
 .req {
-  color: #c9a84c;
+  color: var(--inst-primary);
 }
 .field-hint {
   font-size: 0.68rem;
@@ -777,9 +727,9 @@ async function resetColors() {
   box-sizing: border-box;
 }
 .inst-input:focus {
-  border-color: #c9a84c;
+  border-color: var(--inst-primary);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  box-shadow: 0 0 0 3px var(--inst-primary-ring);
 }
 .inst-input.mono {
   font-family: 'Courier New', monospace;
@@ -802,9 +752,9 @@ async function resetColors() {
   box-sizing: border-box;
 }
 .inst-textarea:focus {
-  border-color: #c9a84c;
+  border-color: var(--inst-primary);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  box-shadow: 0 0 0 3px var(--inst-primary-ring);
 }
 
 /* Select de PrimeVue */
@@ -820,8 +770,8 @@ async function resetColors() {
   font-size: 0.83rem;
 }
 :deep(.inst-select .p-select:not(.p-disabled).p-focus) {
-  border-color: #c9a84c;
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  border-color: var(--inst-primary);
+  box-shadow: 0 0 0 3px var(--inst-primary-ring);
 }
 
 /* Footer del form */
@@ -885,7 +835,7 @@ async function resetColors() {
   transition: border-color 0.2s;
 }
 .logo-preview--uploading {
-  border-color: #c9a84c;
+  border-color: var(--inst-primary);
 }
 .logo-img {
   max-width: 100%;
@@ -912,7 +862,7 @@ async function resetColors() {
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
-  color: #c9a84c;
+  color: var(--inst-primary);
 }
 .logo-actions {
   display: flex;
@@ -938,8 +888,8 @@ async function resetColors() {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: #0a1628;
-  color: #c9a84c;
+  background: var(--inst-primary);
+  color: #ffffff;
   border: none;
   border-radius: 0.55rem;
   padding: 0.58rem 1.2rem;
@@ -947,10 +897,11 @@ async function resetColors() {
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.14s, filter 0.14s;
+  transition: filter 0.14s, box-shadow 0.14s;
 }
 .upload-btn:hover:not(:disabled) {
-  background: #111f38;
+  filter: brightness(1.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 .upload-btn:disabled {
   opacity: 0.55;
@@ -979,31 +930,6 @@ async function resetColors() {
 .remove-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-/* ── Reset colors ── */
-.reset-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-left: auto;
-  background: none;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.4rem 0.9rem;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.14s, border-color 0.14s, background 0.14s;
-  flex-shrink: 0;
-}
-.reset-btn:hover {
-  color: #0a1628;
-  border-color: #94a3b8;
-  background: #f8fafc;
 }
 
 /* Logo en theme preview */

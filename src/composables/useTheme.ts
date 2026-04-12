@@ -1,11 +1,37 @@
 import { watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useInstitutionStore } from '../stores/institution.store';
+
+/** Login y SuperAdmin: diseño fijo (navy/dorado); no aplica colores de institución. */
+function usesFixedAppChrome(path: string): boolean {
+  return (
+    path === '/login' ||
+    path.startsWith('/login/') ||
+    path === '/superadmin' ||
+    path.startsWith('/superadmin/')
+  );
+}
+
+function clearInstitutionThemeFromDocument(): void {
+  document.querySelectorAll('#institution-theme').forEach((el) => el.remove());
+  const root = document.documentElement;
+  root.style.removeProperty('--primary-color');
+  root.style.removeProperty('--p-primary-color');
+  root.style.removeProperty('--secondary-color');
+  root.style.removeProperty('--p-primary-600');
+}
 
 export function useTheme() {
   const institutionStore = useInstitutionStore();
+  const route = useRoute();
   let applyThemeTimeout: number | null = null;
 
   const applyTheme = () => {
+    if (usesFixedAppChrome(route.path)) {
+      clearInstitutionThemeFromDocument();
+      return;
+    }
+
     const institution = institutionStore.institution;
     if (!institution) return;
 
@@ -42,20 +68,31 @@ export function useTheme() {
       }
 
       /* PrimeVue Button Primary */
-      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger) {
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast) {
         background-color: ${institution.primaryColor} !important;
         border-color: ${institution.primaryColor} !important;
+        color: #ffffff !important;
       }
 
-      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):hover {
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast):hover {
         background-color: ${adjustBrightness(institution.primaryColor, -10)} !important;
         border-color: ${adjustBrightness(institution.primaryColor, -10)} !important;
+        color: #ffffff !important;
+      }
+
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast) .p-button-icon {
+        color: inherit !important;
       }
 
       /* PrimeVue Select (Dropdown) */
       .p-select:not(.p-disabled).p-focus {
         border-color: ${institution.primaryColor} !important;
         box-shadow: 0 0 0 0.2rem ${hexToRgba(institution.primaryColor, 0.25)} !important;
+      }
+
+      .p-select:not(.p-disabled).p-focus .p-select-dropdown,
+      .p-select:not(.p-disabled).p-focus .p-icon {
+        color: ${institution.primaryColor} !important;
       }
 
       /* PrimeVue InputText */
@@ -142,9 +179,9 @@ export function useTheme() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // Watch para aplicar tema cuando cambie la institución
+  // Aplicar tema cuando cambie la institución o la ruta (p. ej. salir de /login hacia admin)
   const stopWatch = watch(
-    () => institutionStore.institution,
+    () => [institutionStore.institution, route.path] as const,
     () => {
       applyTheme();
     },
@@ -156,6 +193,11 @@ export function useTheme() {
     if (applyThemeTimeout) {
       clearTimeout(applyThemeTimeout);
       applyThemeTimeout = null;
+    }
+
+    if (usesFixedAppChrome(route.path)) {
+      clearInstitutionThemeFromDocument();
+      return;
     }
 
     const institution = institutionStore.institution;
@@ -188,20 +230,31 @@ export function useTheme() {
       }
 
       /* PrimeVue Button Primary */
-      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger) {
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast) {
         background-color: ${institution.primaryColor} !important;
         border-color: ${institution.primaryColor} !important;
+        color: #ffffff !important;
       }
 
-      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):hover {
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast):hover {
         background-color: ${adjustBrightness(institution.primaryColor, -10)} !important;
         border-color: ${adjustBrightness(institution.primaryColor, -10)} !important;
+        color: #ffffff !important;
+      }
+
+      .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-danger):not(.p-button-info):not(.p-button-help):not(.p-button-warn):not(.p-button-contrast) .p-button-icon {
+        color: inherit !important;
       }
 
       /* PrimeVue Select (Dropdown) */
       .p-select:not(.p-disabled).p-focus {
         border-color: ${institution.primaryColor} !important;
         box-shadow: 0 0 0 0.2rem ${hexToRgba(institution.primaryColor, 0.25)} !important;
+      }
+
+      .p-select:not(.p-disabled).p-focus .p-select-dropdown,
+      .p-select:not(.p-disabled).p-focus .p-icon {
+        color: ${institution.primaryColor} !important;
       }
 
       /* PrimeVue InputText */

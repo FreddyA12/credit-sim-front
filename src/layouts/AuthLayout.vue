@@ -15,7 +15,7 @@
               <path d="M10 1L1 6.5L10 12l9-5.5L10 1z" fill="#e8c96a" opacity="0.7"/>
             </svg>
           </div>
-          <span class="dp-brand-name">{{ institution?.name || 'FinSim' }}</span>
+          <span class="dp-brand-name">FinSim</span>
         </div>
 
         <!-- Tagline -->
@@ -86,14 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useInstitutionStore } from '../stores/institution.store';
-import { storeToRefs } from 'pinia';
-
-const institutionStore = useInstitutionStore();
-const { institution } = storeToRefs(institutionStore);
-
-onMounted(() => institutionStore.fetch().catch(() => {}));
+defineOptions({ name: 'AuthLayout' });
 </script>
 
 <style scoped>

@@ -1,24 +1,32 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Gestión de Instituciones</h1>
-      <Button label="Nueva institución" icon="pi pi-plus" @click="openCreate" />
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header>
+        <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Directorio</p>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Gestión de instituciones</h1>
+        <p class="mt-1 max-w-xl text-sm text-slate-600">Alta de cooperativas o bancos y creación de usuarios administradores.</p>
+      </header>
+      <Button label="Nueva institución" icon="pi pi-plus" class="shrink-0" @click="openCreate" />
     </div>
 
-    <DataTable :value="institutions" size="small" class="mb-6">
-      <Column field="name" header="Nombre" />
-      <Column field="slug" header="Slug" />
-      <Column field="type" header="Tipo" />
-      <Column field="ruc" header="RUC" />
-      <Column header="Acciones">
-        <template #body="{ data }">
-          <div class="flex gap-2">
-            <Button icon="pi pi-user-plus" size="small" text severity="info" title="Crear admin" @click="openCreateAdmin(data)" />
-            <Button icon="pi pi-trash" size="small" text severity="danger" @click="deleteInstitution(data.id)" />
-          </div>
-        </template>
-      </Column>
-    </DataTable>
+    <Card class="border-slate-200 shadow-sm">
+      <template #content>
+        <DataTable :value="institutions" size="small">
+          <Column field="name" header="Nombre" />
+          <Column field="slug" header="Slug" />
+          <Column field="type" header="Tipo" />
+          <Column field="ruc" header="RUC" />
+          <Column header="Acciones">
+            <template #body="{ data }">
+              <div class="flex gap-2">
+                <Button icon="pi pi-user-plus" size="small" text severity="secondary" title="Crear admin" @click="openCreateAdmin(data)" />
+                <Button icon="pi pi-trash" size="small" text severity="danger" @click="deleteInstitution(data.id)" />
+              </div>
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
 
     <Dialog v-model:visible="showCreateDialog" header="Nueva Institución" :style="{ width: '500px' }" modal>
       <form @submit.prevent="saveInstitution" class="flex flex-col gap-3 pt-2">
@@ -103,6 +111,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
