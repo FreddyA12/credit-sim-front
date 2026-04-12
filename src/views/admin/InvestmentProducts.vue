@@ -41,27 +41,27 @@
       <form @submit.prevent="save" class="grid grid-cols-2 gap-4 pt-2">
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nombre</label>
-          <InputText v-model="form.name" />
+          <InputText v-model="form.name" class="w-full" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo mínimo (días)</label>
-          <InputNumber v-model="form.minTermDays" :min="1" />
+          <InputNumber v-model="form.minTermDays" :min="1" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo máximo (días)</label>
-          <InputNumber v-model="form.maxTermDays" :min="1" />
+          <InputNumber v-model="form.maxTermDays" :min="1" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto mínimo (USD)</label>
-          <InputNumber v-model="form.minAmount" :min="0" />
+          <InputNumber v-model="form.minAmount" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto máximo (USD)</label>
-          <InputNumber v-model="form.maxAmount" :min="0" />
+          <InputNumber v-model="form.maxAmount" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa anual (%)</label>
-          <InputNumber v-model="form.annualRate" :minFractionDigits="2" :min="0" :max="100" />
+          <InputNumber v-model="form.annualRate" :minFractionDigits="2" :min="0" :max="100" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Frecuencia de pago</label>
@@ -108,13 +108,12 @@ const saving = ref(false);
 const editingId = ref<string | null>(null);
 
 const freqOptions = [
-  { label: 'Al vencimiento', value: 'vencimiento' },
-  { label: 'Mensual', value: 'mensual' },
-  { label: 'Trimestral', value: 'trimestral' },
-  { label: 'Semestral', value: 'semestral' },
+  { label: 'Al vencimiento', value: 'at_maturity' },
+  { label: 'Mensual', value: 'monthly' },
+  { label: 'Trimestral', value: 'quarterly' },
 ];
 
-const emptyForm = () => ({ name: '', minTermDays: 30, maxTermDays: 360, minAmount: 500, maxAmount: null as any, annualRate: 0, paymentFrequency: 'vencimiento', autoRenew: false, active: true });
+const emptyForm = () => ({ name: '', minTermDays: 30, maxTermDays: 360, minAmount: 500, maxAmount: null as any, annualRate: 0, paymentFrequency: 'at_maturity', autoRenew: false, active: true });
 const form = ref(emptyForm());
 
 onMounted(async () => {
