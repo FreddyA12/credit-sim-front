@@ -6,31 +6,41 @@
       <Button label="Agregar cobro" icon="pi pi-plus" class="ml-auto" @click="openDialog()" />
     </div>
 
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-sm text-blue-800">
+      <p class="font-semibold mb-1"><i class="pi pi-info-circle mr-1"></i>Cobros regulados por ley</p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li><strong>SOLCA (0.5%)</strong> se calcula automáticamente al desembolso para todos los créditos (COMF Disposición General 14ª). No necesita configurarse aquí.</li>
+        <li v-if="isMortgageSegment"><strong>Seguro de Desgravamen</strong> y <strong>Seguro de Incendio y Terremoto</strong> son obligatorios para este segmento y se crean automáticamente. Solo puede modificar la tasa.</li>
+        <li v-else><strong>Seguro de Desgravamen</strong> es opcional para este segmento. El <strong>Seguro de Incendio y Terremoto</strong> no aplica a este tipo de crédito.</li>
+      </ul>
+    </div>
+
     <DataTable :value="charges" :loading="loading" stripedRows>
       <Column field="name" header="Nombre" />
-      <Column field="chargeType" header="Tipo" />
+      <Column header="Tipo">
+        <template #body="{ data }">{{ chargeTypeLabel(data.chargeType) }}</template>
+      </Column>
       <Column header="Valor">
         <template #body="{ data }">
           {{ data.valueType === 'percentage' ? `${data.value}%` : `$${data.value}` }}
         </template>
       </Column>
-      <Column field="timing" header="Momento" />
-      <Column field="calculationBase" header="Base de cálculo" />
+      <Column header="Momento">
+        <template #body="{ data }">{{ data.timing === 'disbursement' ? 'Al desembolso' : 'Por cuota' }}</template>
+      </Column>
+      <Column header="Base de cálculo">
+        <template #body="{ data }">{{ calcBaseLabel(data.calculationBase) }}</template>
+      </Column>
       <Column header="Obligatorio">
         <template #body="{ data }">
           <Tag :value="data.mandatory ? 'Sí' : 'No'" :severity="data.mandatory ? 'warn' : 'secondary'" />
-        </template>
-      </Column>
-      <Column header="Nota legal">
-        <template #body="{ data }">
-          <span class="text-xs text-gray-500 line-clamp-2">{{ data.legalNote }}</span>
         </template>
       </Column>
       <Column header="Acciones">
         <template #body="{ data }">
           <div class="flex gap-2">
             <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openDialog(data)" />
-            <Button icon="pi pi-trash" severity="danger" text rounded @click="confirmDelete(data)" />
+            <Button v-if="!isLockedCharge(data)" icon="pi pi-trash" severity="danger" text rounded @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>
@@ -40,35 +50,46 @@
       <form @submit.prevent="save" class="grid grid-cols-2 gap-4 pt-2">
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nombre</label>
-          <InputText v-model="form.name" />
+          <InputText v-model="form.name" class="w-full" :disabled="isInsuranceType" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tipo de cobro</label>
-          <Select v-model="form.chargeType" :options="chargeTypeOptions" optionLabel="label" optionValue="value" />
+          <Select v-model="form.chargeType" :options="availableChargeTypes" optionLabel="label" optionValue="value" :disabled="!!editingId" @change="onChargeTypeChange" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tipo de valor</label>
-          <Select v-model="form.valueType" :options="[{label:'Porcentaje',value:'percentage'},{label:'Monto fijo',value:'fixed_amount'}]" optionLabel="label" optionValue="value" />
+          <Select v-model="form.valueType" :options="[{label:'Porcentaje',value:'percentage'},{label:'Monto fijo',value:'fixed_amount'}]" optionLabel="label" optionValue="value" :disabled="isInsuranceType" />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Valor</label>
-          <InputNumber v-model="form.value" :minFractionDigits="4" :min="0" />
+          <label class="text-sm font-medium">Valor (tasa %)</label>
+          <InputNumber v-model="form.value" :minFractionDigits="4" :min="0" fluid />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Momento de cobro</label>
-          <Select v-model="form.timing" :options="[{label:'Al desembolso',value:'disbursement'},{label:'Por cuota',value:'per_installment'}]" optionLabel="label" optionValue="value" />
+          <Select v-model="form.timing" :options="[{label:'Al desembolso',value:'disbursement'},{label:'Por cuota',value:'per_installment'}]" optionLabel="label" optionValue="value" :disabled="isInsuranceType" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Base de cálculo</label>
-          <Select v-model="form.calculationBase" :options="[{label:'Capital inicial',value:'initial_capital'},{label:'Saldo vigente',value:'outstanding_balance'},{label:'Monto fijo',value:'fixed'}]" optionLabel="label" optionValue="value" />
+          <Select v-model="form.calculationBase" :options="[{label:'Capital inicial',value:'initial_capital'},{label:'Saldo vigente',value:'outstanding_balance'},{label:'Monto fijo',value:'fixed'}]" optionLabel="label" optionValue="value" :disabled="isInsuranceType" />
         </div>
         <div class="flex items-center gap-2">
-          <Checkbox v-model="form.mandatory" :binary="true" />
+          <Checkbox v-model="form.mandatory" :binary="true" :disabled="isInsuranceType" />
           <label class="text-sm">Obligatorio</label>
         </div>
+        <div class="flex items-center gap-2">
+          <Checkbox v-model="form.active" :binary="true" />
+          <label class="text-sm">Activo</label>
+        </div>
+
+        <div v-if="isInsuranceType" class="col-span-2 bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
+          <i class="pi pi-lock mr-1"></i>
+          <span v-if="form.chargeType === 'life_insurance'">Seguro de Desgravamen: por normativa se cobra por cuota sobre saldo vigente (Art. 210 COMF). Solo puede modificar la tasa.</span>
+          <span v-else>Seguro de Incendio y Terremoto: por normativa se cobra por cuota sobre saldo vigente (Art. 308 COMF). Solo puede modificar la tasa.</span>
+        </div>
+
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nota legal</label>
-          <Textarea v-model="form.legalNote" rows="3" />
+          <Textarea v-model="form.legalNote" rows="3" class="w-full" />
         </div>
         <div class="col-span-2 flex justify-end gap-2">
           <Button label="Cancelar" severity="secondary" @click="dialogVisible = false" />
@@ -80,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -99,23 +120,92 @@ import api from '../../services/api';
 const route = useRoute();
 const toast = useToast();
 const confirm = useConfirm();
-const creditTypeId = Number(route.params.id);
+const creditTypeId = route.params.id as string;
 const creditTypeName = ref('');
+const creditTypeBceSegment = ref('');
 const charges = ref<any[]>([]);
 const loading = ref(false);
 const dialogVisible = ref(false);
 const saving = ref(false);
-const editingId = ref<number | null>(null);
+const editingId = ref<string | null>(null);
 
-const chargeTypeOptions = [
-  { label: 'Desgravamen', value: 'desgravamen' },
-  { label: 'Incendio y Terremoto', value: 'incendio_terremoto' },
-  { label: 'SOLCA', value: 'solca' },
+const MORTGAGE_SEGMENTS = [
+  'mortgage', 'social_housing', 'real_estate',
+  'hipotecario', 'vivienda_interes_social', 'vivienda_interes_publico', 'inmobiliario',
+];
+
+const isMortgageSegment = computed(() => MORTGAGE_SEGMENTS.includes(creditTypeBceSegment.value));
+
+const allChargeTypes = [
+  { label: 'Seguro de Desgravamen', value: 'life_insurance' },
+  { label: 'Seguro de Incendio y Terremoto', value: 'fire_earthquake' },
   { label: 'Otro', value: 'other' },
 ];
 
-const emptyForm = () => ({ name: '', chargeType: 'other', valueType: 'percentage', value: 0, timing: 'disbursement', calculationBase: 'initial_capital', mandatory: false, legalNote: '', active: true });
+const availableChargeTypes = computed(() => {
+  if (isMortgageSegment.value) return allChargeTypes;
+  return allChargeTypes.filter((t) => t.value !== 'fire_earthquake');
+});
+
+const isInsuranceType = computed(() =>
+  form.value.chargeType === 'life_insurance' || form.value.chargeType === 'fire_earthquake',
+);
+
+function chargeTypeLabel(type: string) {
+  const map: Record<string, string> = {
+    life_insurance: 'Seguro de Desgravamen',
+    fire_earthquake: 'Seguro Incendio/Terremoto',
+    solca: 'SOLCA',
+    other: 'Otro',
+  };
+  return map[type] || type;
+}
+
+function calcBaseLabel(base: string) {
+  const map: Record<string, string> = {
+    initial_capital: 'Capital inicial',
+    outstanding_balance: 'Saldo vigente',
+    fixed: 'Monto fijo',
+  };
+  return map[base] || base;
+}
+
+function isLockedCharge(data: any) {
+  return (data.chargeType === 'life_insurance' || data.chargeType === 'fire_earthquake') && data.mandatory;
+}
+
+const emptyForm = () => ({
+  name: '',
+  chargeType: 'other',
+  valueType: 'percentage',
+  value: 0,
+  timing: 'disbursement',
+  calculationBase: 'initial_capital',
+  mandatory: false,
+  legalNote: '',
+  active: true,
+});
 const form = ref(emptyForm());
+
+function onChargeTypeChange() {
+  if (form.value.chargeType === 'life_insurance') {
+    form.value.name = 'Seguro de Desgravamen';
+    form.value.timing = 'per_installment';
+    form.value.calculationBase = 'outstanding_balance';
+    form.value.valueType = 'percentage';
+    form.value.mandatory = true;
+    form.value.value = 0.0499;
+    form.value.legalNote = 'Circular SB-IG-2024-0034-C, Cap. XXV JPRF, Art. 210 COMF — 0.0499% mensual sobre saldo.';
+  } else if (form.value.chargeType === 'fire_earthquake') {
+    form.value.name = 'Seguro de Incendio y Terremoto';
+    form.value.timing = 'per_installment';
+    form.value.calculationBase = 'outstanding_balance';
+    form.value.valueType = 'percentage';
+    form.value.mandatory = true;
+    form.value.value = 0.03;
+    form.value.legalNote = 'Art. 308 COMF, Art. 68 LGS — Prima mensual sobre saldo asegurado.';
+  }
+}
 
 onMounted(async () => {
   loading.value = true;
@@ -124,6 +214,7 @@ onMounted(async () => {
     api.get(`/credit-types/${creditTypeId}/charges`),
   ]);
   creditTypeName.value = typeRes.data.name;
+  creditTypeBceSegment.value = typeRes.data.bceSegment || '';
   charges.value = chargesRes.data;
   loading.value = false;
 });
@@ -147,8 +238,9 @@ async function save() {
     }
     toast.add({ severity: 'success', summary: 'Guardado', life: 3000 });
     dialogVisible.value = false;
-  } catch {
-    toast.add({ severity: 'error', summary: 'Error al guardar', life: 3000 });
+  } catch (e: any) {
+    const msg = e.response?.data?.message;
+    toast.add({ severity: 'error', summary: 'Error al guardar', detail: Array.isArray(msg) ? msg.join(', ') : msg, life: 5000 });
   } finally {
     saving.value = false;
   }
