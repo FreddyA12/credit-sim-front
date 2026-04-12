@@ -34,6 +34,14 @@
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
                 <InputNumber v-model="form.netIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                <div v-if="maxPaymentCapacity !== null" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <p class="font-semibold text-blue-900">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    Con tus ingresos puedes pagar hasta:
+                  </p>
+                  <p class="text-lg font-bold text-blue-700 mt-1">${{ maxPaymentCapacity.toFixed(2) }} USD/mes</p>
+                  <small class="text-gray-600">Calculado como el 40% de tus ingresos netos</small>
+                </div>
               </div>
               <Button type="submit" label="Simular" icon="pi pi-calculator" :loading="loading" />
             </form>
@@ -112,6 +120,13 @@ const formCollapsed = ref(false);
 
 const form = ref({ creditTypeId: null as any, amount: null as any, termMonths: null as any, netIncome: null as any, amortizationSystem: 'french' as 'french' | 'german' });
 const selectedType = computed(() => creditTypes.value.find((t) => t.id === form.value.creditTypeId));
+
+// Calcular capacidad máxima de pago (40% de ingresos netos)
+const maxPaymentCapacity = computed(() => {
+  const income = form.value.netIncome || 0;
+  if (income <= 0) return null;
+  return income * 0.4;
+});
 
 const legalNotes = computed(() => {
   if (!result.value) return [];

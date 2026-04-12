@@ -37,6 +37,7 @@ const router = useRouter();
 const navLinks = [
   { to: '/superadmin/dashboard', icon: 'pi pi-home', label: 'Dashboard' },
   { to: '/superadmin/institutions', icon: 'pi pi-building', label: 'Instituciones' },
+  { to: '/superadmin/bce-rate-limits', icon: 'pi pi-percentage', label: 'Límites BCE' },
 ];
 
 function logout() {
