@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Simulador de Inversión</h1>
-    <div v-if="!formCollapsed">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card class="lg:col-span-1">
+  <div class="flex w-full flex-col items-center">
+    <h1 class="mb-6 w-full max-w-2xl text-center text-2xl font-bold text-gray-800">Simulador de Inversión</h1>
+    <div v-if="!formCollapsed" class="flex w-full justify-center px-0 sm:px-2">
+      <div class="w-full max-w-lg">
+        <Card class="w-full shadow-sm">
           <template #title>Parámetros de inversión</template>
           <template #content>
             <form @submit.prevent="simulate" class="flex flex-col gap-4">
@@ -42,21 +42,21 @@
 
               <div
                 v-if="appliedRatePreview?.kind === 'ok'"
-                class="rounded-xl border border-emerald-200/90 bg-gradient-to-br from-emerald-50 via-white to-slate-50/80 p-4 shadow-sm ring-1 ring-emerald-500/5"
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4"
               >
                 <div class="flex gap-4">
                   <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600"
                     aria-hidden="true"
                   >
-                    <i class="pi pi-percentage text-xl"></i>
+                    <i class="pi pi-percentage text-lg"></i>
                   </div>
                   <div class="min-w-0 flex-1">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800/70">Tasa anual aplicable</p>
-                    <p class="mt-0.5 text-3xl font-bold tabular-nums leading-tight text-emerald-950">{{ appliedRatePreview.rate }}%</p>
-                    <p class="mt-2 text-sm text-slate-600">
-                      <span class="font-semibold text-slate-800">{{ appliedRatePreview.days }} días</span>
-                      <span class="mx-1.5 text-slate-300">·</span>
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tasa anual aplicable</p>
+                    <p class="mt-0.5 text-3xl font-bold tabular-nums leading-tight text-gray-900">{{ appliedRatePreview.rate }}%</p>
+                    <p class="mt-2 text-sm text-gray-600">
+                      <span class="font-medium text-gray-800">{{ appliedRatePreview.days }} días</span>
+                      <span class="mx-1.5 text-gray-300">·</span>
                       <span>{{ appliedRatePreview.tierCaption }}</span>
                     </p>
                   </div>
@@ -65,13 +65,13 @@
 
               <div
                 v-else-if="appliedRatePreview?.kind === 'out_of_range'"
-                class="rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-sm text-amber-900"
+                class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
               >
                 Indica un plazo entre <strong>{{ termMin }}</strong> y <strong>{{ termMax }}</strong> días.
               </div>
               <div
                 v-else-if="appliedRatePreview?.kind === 'no_rate'"
-                class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+                class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
               >
                 No hay tasa definida para este plazo. Revisa el producto en administración.
               </div>
@@ -83,7 +83,10 @@
       </div>
     </div>
 
-    <div v-if="result" class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mb-4">
+    <div
+      v-if="result"
+      class="mb-4 flex w-full max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
+    >
       <div class="text-sm text-gray-700 flex flex-wrap gap-4">
         <span><strong>{{ selectedProduct?.name }}</strong></span>
         <span>Monto: <strong>${{ form.amount?.toFixed(2) }}</strong></span>
@@ -91,16 +94,16 @@
         <span>Tasa: <strong>{{ resolvedAnnualRate != null ? resolvedAnnualRate + '%' : '—' }}</strong></span>
         <span>Pago de intereses: <strong>{{ paymentFrequencyLabel(selectedProduct?.paymentFrequency) }}</strong></span>
       </div>
-      <div class="flex gap-2 ml-4">
+      <div class="flex flex-wrap gap-2 sm:ml-4">
         <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="formCollapsed = false" />
         <Button label="Descargar PDF" icon="pi pi-download" severity="info" size="small" @click="downloadPdf" />
         <Button label="Invertir" icon="pi pi-wallet" severity="success" size="small" @click="goToApplication" />
       </div>
     </div>
 
-    <div v-if="result" class="flex flex-col gap-4">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="item in summaryItems" :key="item.label" class="bg-white rounded-xl shadow p-4">
+    <div v-if="result" class="flex w-full max-w-4xl flex-col gap-4">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div v-for="item in summaryItems" :key="item.label" class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
           <p class="text-xs text-gray-500">{{ item.label }}</p>
           <p class="text-xl font-bold text-gray-800">{{ item.value }}</p>
         </div>
@@ -152,7 +155,7 @@
             </Column>
             <Column field="totalAtMaturity" header="Total al vencimiento">
               <template #body="{ data }">
-                <span v-if="data.totalAtMaturity" class="font-bold text-green-600">
+                <span v-if="data.totalAtMaturity" class="font-bold text-gray-900">
                   ${{ data.totalAtMaturity?.toFixed(2) }}
                 </span>
                 <span v-else class="text-gray-400">—</span>
