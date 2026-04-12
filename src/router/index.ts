@@ -36,6 +36,7 @@ const router = createRouter({
         { path: 'dashboard', component: () => import('../views/superadmin/SuperAdminDashboard.vue') },
         { path: 'institutions', component: () => import('../views/superadmin/InstitutionsManager.vue') },
         { path: 'bce-rate-limits', component: () => import('../views/superadmin/BceRateLimitsManager.vue') },
+        { path: 'jprf-rates', component: () => import('../views/superadmin/JprfRatesManager.vue') },
       ],
     },
     {

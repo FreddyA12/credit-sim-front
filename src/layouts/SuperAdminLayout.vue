@@ -61,7 +61,8 @@ const router = useRouter();
 const navLinks = [
   { to: '/superadmin/dashboard', icon: 'pi pi-home', label: 'Dashboard' },
   { to: '/superadmin/institutions', icon: 'pi pi-building', label: 'Instituciones' },
-  { to: '/superadmin/bce-rate-limits', icon: 'pi pi-percentage', label: 'Límites BCE' },
+  { to: '/superadmin/bce-rate-limits', icon: 'pi pi-chart-bar', label: 'Límites BCE' },
+  { to: '/superadmin/jprf-rates', icon: 'pi pi-percentage', label: 'Tasas JPRF' },
 ];
 
 function logout() {

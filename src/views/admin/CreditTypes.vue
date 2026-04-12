@@ -48,15 +48,25 @@
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Segmento BCE</label>
-          <Select v-model="form.bceSegment" :options="segmentOptions" optionLabel="label" optionValue="value" />
+          <Select v-model="form.bceSegment" :options="segmentOptions" optionLabel="label" optionValue="value"
+            @update:modelValue="onSegmentChange" />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Tasa anual (%)</label>
-          <InputNumber v-model="form.annualRate" :min="0" :max="100" :minFractionDigits="2" fluid />
+          <label class="text-sm font-medium">Tasa anual que cobrará la institución (%)</label>
+          <InputNumber v-model="form.annualRate" :min="0"
+            :max="selectedJprfRate ? Number(selectedJprfRate.maxRate) : 100"
+            :minFractionDigits="2" fluid />
+          <small v-if="selectedJprfRate" class="text-xs text-gray-400">
+            Debe ser menor o igual al máximo legal: <strong>{{ Number(selectedJprfRate.maxRate).toFixed(2) }}%</strong>
+          </small>
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Tasa máx. JPRF (%)</label>
-          <InputNumber v-model="form.maxJprfRate" :min="0" :max="100" :minFractionDigits="2" fluid />
+          <label class="text-sm font-medium">Tasa máx. JPRF (% — fijada por el regulador)</label>
+          <InputNumber v-model="form.maxJprfRate" :min="0" :max="100" :minFractionDigits="2" fluid disabled />
+          <small v-if="selectedJprfRate" class="text-xs text-blue-500">
+            {{ selectedJprfRate.legalSource }}
+          </small>
+          <small v-else class="text-xs text-gray-400">Se asigna automáticamente al seleccionar el segmento BCE</small>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto mínimo (USD)</label>
@@ -102,7 +112,9 @@ import Select from 'primevue/select';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
+import Message from 'primevue/message';
 import { useCreditStore } from '../../stores/credit.store';
+import api from '../../services/api';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -116,6 +128,8 @@ const filteredTypes = computed(() =>
 const dialogVisible = ref(false);
 const saving = ref(false);
 const editingId = ref<string | null>(null);
+const jprfRates = ref<Record<string, any>>({});
+const selectedJprfRate = ref<any>(null);
 
 function segmentLabel(value: string) {
   return segmentOptions.find((o) => o.value === value)?.label ?? value;
@@ -125,31 +139,42 @@ const emptyForm = () => ({ name: '', bceSegment: 'consumo', annualRate: 0, maxJp
 const form = ref(emptyForm());
 
 const segmentOptions = [
-  { label: 'Consumo', value: 'consumo' },
-  { label: 'Consumo ordinario', value: 'consumo_ordinario' },
-  { label: 'Consumo prioritario', value: 'consumo_prioritario' },
-  { label: 'Hipotecario', value: 'hipotecario' },
-  { label: 'Vivienda interés social', value: 'vivienda_interes_social' },
-  { label: 'Vivienda interés público', value: 'vivienda_interes_publico' },
-  { label: 'Inmobiliario', value: 'inmobiliario' },
-  { label: 'Microcrédito minorista', value: 'microcredito_minorista' },
-  { label: 'Microcrédito acumulación simple', value: 'microcredito_acumulacion_simple' },
-  { label: 'Microcrédito acumulación ampliada', value: 'microcredito_acumulacion_ampliada' },
-  { label: 'Productivo PYMES', value: 'productivo_pymes' },
-  { label: 'Productivo empresarial', value: 'productivo_empresarial' },
-  { label: 'Productivo corporativo', value: 'productivo_corporativo' },
-  { label: 'Educativo', value: 'educativo' },
+  { label: 'Consumo (máx. 16.77%)', value: 'consumo' },
+  { label: 'Educativo (máx. 9.50%)', value: 'educativo' },
+  { label: 'Educativo Social (máx. 7.50%)', value: 'educativo_social' },
+  { label: 'Vivienda de Interés Público (máx. 4.99%)', value: 'vivienda_interes_publico' },
+  { label: 'Vivienda de Interés Social (máx. 4.99%)', value: 'vivienda_interes_social' },
+  { label: 'Inmobiliario (máx. 10.58%)', value: 'inmobiliario' },
+  { label: 'Microcrédito Minorista (máx. 28.23%)', value: 'microcredito_minorista' },
+  { label: 'Microcrédito Acumulación Simple (máx. 24.89%)', value: 'microcredito_acumulacion_simple' },
+  { label: 'Microcrédito Acumulación Ampliada (máx. 22.05%)', value: 'microcredito_acumulacion_ampliada' },
+  { label: 'Productivo PYMES (máx. 10.28%)', value: 'productivo_pymes' },
+  { label: 'Productivo Empresarial (máx. 11.00%)', value: 'productivo_empresarial' },
+  { label: 'Productivo Corporativo (máx. 8.00%)', value: 'productivo_corporativo' },
+  { label: 'Inversión Pública (máx. 9.33%)', value: 'inversion_publica' },
 ];
 
 onMounted(async () => {
   loading.value = true;
-  await creditStore.fetchTypes();
+  const [, { data: rates }] = await Promise.all([
+    creditStore.fetchTypes(),
+    api.get('/jprf-rates'),
+  ]);
+  jprfRates.value = Object.fromEntries(rates.map((r: any) => [r.segment, r]));
   loading.value = false;
 });
+
+function onSegmentChange(segment: string) {
+  selectedJprfRate.value = jprfRates.value[segment] ?? null;
+  if (selectedJprfRate.value) {
+    form.value.maxJprfRate = Number(selectedJprfRate.value.maxRate);
+  }
+}
 
 function openDialog(data?: any) {
   form.value = data ? { ...data } : emptyForm();
   editingId.value = data?.id ?? null;
+  selectedJprfRate.value = jprfRates.value[form.value.bceSegment] ?? null;
   dialogVisible.value = true;
 }
 

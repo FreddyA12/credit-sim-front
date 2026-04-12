@@ -1,19 +1,19 @@
 export const JPRF_MAX_RATES: Record<string, number> = {
-  consumo: 17.3,
-  consumo_ordinario: 17.3,
-  consumo_prioritario: 17.3,
-  hipotecario: 11.33,
-  vivienda_interes_social: 4.99,
+  consumo: 16.77,
+  educativo: 9.50,
+  educativo_social: 7.50,
   vivienda_interes_publico: 4.99,
-  inmobiliario: 11.33,
-  microcredito_minorista: 30.5,
-  microcredito_acumulacion_simple: 27.5,
-  microcredito_acumulacion_ampliada: 25.5,
-  productivo_pymes: 11.83,
-  productivo_empresarial: 10.21,
-  productivo_corporativo: 9.33,
-  educativo: 9.5,
-  inversion_publica: 9.5,
+  vivienda_interes_social: 4.99,
+  inmobiliario: 10.58,
+  microcredito_minorista: 28.23,
+  microcredito_acumulacion_simple: 24.89,
+  microcredito_acumulacion_ampliada: 22.05,
+  productivo_pymes: 10.28,
+  productivo_empresarial: 11.00,
+  productivo_corporativo: 8.00,
+  inversion_publica: 9.33,
 };
 
-export const JPRF_LEGAL_SOURCE = 'JPRF Resolución No. 646-2023-F (actualización vigente)';
+export const JPRF_LEGAL_SOURCE =
+  'Resolución No. JPRF-F-2023-070 (22-jun-2023) e Inmobiliario por Res. JPRF-F-2024-0104 (15-mar-2024) ' +
+  '— Junta de Política y Regulación Financiera del Ecuador. Vigente Abril 2026.';
