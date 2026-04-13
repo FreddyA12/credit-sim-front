@@ -21,11 +21,7 @@
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
-      <Column header="Biométrico">
-        <template #body="{ data }">
-          <Tag :value="data.biometricsValidated ? 'Verificado' : 'Pendiente'" :severity="data.biometricsValidated ? 'success' : 'warn'" />
-        </template>
-      </Column>
+
       <Column header="Acciones">
         <template #body="{ data }">
           <div class="flex gap-2">
