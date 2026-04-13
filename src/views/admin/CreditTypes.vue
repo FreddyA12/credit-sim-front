@@ -53,10 +53,14 @@
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa anual (%)</label>
           <InputNumber v-model="form.annualRate" :min="0" :max="100" :minFractionDigits="2" fluid />
+          <span v-if="annualRateError" class="text-xs text-red-600">{{ annualRateError }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa máx. JPRF (%)</label>
-          <InputNumber v-model="form.maxJprfRate" :min="0" :max="100" :minFractionDigits="2" fluid />
+          <InputNumber v-model="form.maxJprfRate" :minFractionDigits="2" fluid disabled />
+          <span v-if="form.bceSegment && jprfRates[form.bceSegment]" class="text-xs text-slate-500">
+            {{ jprfRates[form.bceSegment].legalSource }}
+          </span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto mínimo (USD)</label>
@@ -88,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -103,6 +107,9 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useCreditStore } from '../../stores/credit.store';
+import api from '../../services/api';
+
+type JprfRateEntry = { maxRate: number; segmentLabel: string; legalSource: string };
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -117,37 +124,52 @@ const dialogVisible = ref(false);
 const saving = ref(false);
 const editingId = ref<string | null>(null);
 
+const jprfRates = ref<Record<string, JprfRateEntry>>({});
+
+async function loadJprfRates() {
+  const { data } = await api.get('/public/jprf-rates');
+  jprfRates.value = Object.fromEntries(
+    data.map((r: any) => [r.segment, { maxRate: Number(r.maxRate), segmentLabel: r.segmentLabel, legalSource: r.legalSource }]),
+  );
+}
+
+const segmentOptions = computed(() =>
+  Object.entries(jprfRates.value).map(([value, r]) => ({ label: r.segmentLabel, value })),
+);
+
 function segmentLabel(value: string) {
-  return segmentOptions.find((o) => o.value === value)?.label ?? value;
+  return jprfRates.value[value]?.segmentLabel ?? value;
 }
 
 const emptyForm = () => ({ name: '', bceSegment: 'consumo', annualRate: 0, maxJprfRate: 0, minAmount: 0, maxAmount: 0, minTermMonths: 1, maxTermMonths: 60, active: true });
 const form = ref(emptyForm());
 
-const segmentOptions = [
-  { label: 'Consumo', value: 'consumo' },
-  { label: 'Educativo', value: 'educativo' },
-  { label: 'Educativo Social', value: 'educativo_social' },
-  { label: 'Vivienda de Interés Público', value: 'vivienda_interes_publico' },
-  { label: 'Vivienda de Interés Social', value: 'vivienda_interes_social' },
-  { label: 'Inmobiliario', value: 'inmobiliario' },
-  { label: 'Microcrédito Minorista', value: 'microcredito_minorista' },
-  { label: 'Microcrédito de Acumulación Simple', value: 'microcredito_acumulacion_simple' },
-  { label: 'Microcrédito de Acumulación Ampliada', value: 'microcredito_acumulacion_ampliada' },
-  { label: 'Productivo PYMES', value: 'productivo_pymes' },
-  { label: 'Productivo Empresarial', value: 'productivo_empresarial' },
-  { label: 'Productivo Corporativo', value: 'productivo_corporativo' },
-  { label: 'Inversión Pública', value: 'inversion_publica' },
-];
+const annualRateError = computed(() => {
+  const max = jprfRates.value[form.value.bceSegment]?.maxRate;
+  if (max !== undefined && form.value.annualRate > max) {
+    return `Supera el máximo JPRF permitido (${max}%)`;
+  }
+  return null;
+});
+
+watch(() => form.value.bceSegment, (segment) => {
+  if (segment && jprfRates.value[segment]) {
+    form.value.maxJprfRate = jprfRates.value[segment].maxRate;
+  }
+});
 
 onMounted(async () => {
   loading.value = true;
-  await creditStore.fetchTypes();
+  await Promise.all([creditStore.fetchTypes(), loadJprfRates()]);
   loading.value = false;
 });
 
 function openDialog(data?: any) {
-  form.value = data ? { ...data } : emptyForm();
+  const base = data ? { ...data } : emptyForm();
+  if (base.bceSegment && jprfRates.value[base.bceSegment]) {
+    base.maxJprfRate = jprfRates.value[base.bceSegment].maxRate;
+  }
+  form.value = base;
   editingId.value = data?.id ?? null;
   dialogVisible.value = true;
 }

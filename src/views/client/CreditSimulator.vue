@@ -33,23 +33,10 @@
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
                 <InputNumber v-model="form.netIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
-                <div v-if="maxPaymentCapacity !== null" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                  <p class="font-semibold text-blue-900">
-                    <i class="pi pi-info-circle mr-1"></i>
-                    Con tus ingresos puedes pagar hasta:
-                  </p>
-                  <p class="text-lg font-bold text-blue-700 mt-1">${{ formatNumber(maxPaymentCapacity) }} USD/mes</p>
-                  <small class="text-gray-600">Calculado como el 40% de tus ingresos netos</small>
-                </div>
+                <span v-if="maxPaymentCapacity !== null" class="text-xs text-gray-500">
+                  Capacidad de pago: <strong class="text-blue-600">${{ formatNumber(maxPaymentCapacity) }}/mes</strong>
+                </span>
               </div>
-            </div>
-            <div v-if="maxPaymentCapacity !== null" class="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-              <p class="font-semibold text-blue-900">
-                <i class="pi pi-info-circle mr-1"></i>
-                Con tus ingresos puedes pagar hasta:
-              </p>
-              <p class="text-lg font-bold text-blue-700 mt-1">${{ maxPaymentCapacity.toFixed(2) }} USD/mes</p>
-              <small class="text-gray-600">Calculado como el 40% de tus ingresos netos</small>
             </div>
             <div class="flex justify-end">
               <Button type="submit" label="Simular" icon="pi pi-calculator" :loading="loading" />
