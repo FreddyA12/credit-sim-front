@@ -191,28 +191,9 @@
             </div>
           </TabPanel>
 
-          <!-- TAB 5: Biometría -->
-          <TabPanel header="Biometría y Validación" value="4">
-            <div class="space-y-4">
-              <div class="p-4 rounded-lg" :class="selected.biometricsValidated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="font-medium" :class="selected.biometricsValidated ? 'text-green-900' : 'text-yellow-900'">
-                      Estado de validación biométrica
-                    </p>
-                    <p class="text-sm mt-1" :class="selected.biometricsValidated ? 'text-green-700' : 'text-yellow-700'">
-                      {{ selected.biometricsValidated ? 'Verificado' : 'Pendiente de verificación' }}
-                    </p>
-                  </div>
-                  <Tag :value="selected.biometricsValidated ? 'Verificado' : 'Pendiente'" :severity="selected.biometricsValidated ? 'success' : 'warn'" />
-                </div>
-              </div>
-              <div v-if="selected.biometricsScore">
-                <p class="text-sm font-medium text-gray-700">Puntuación biométrica</p>
-                <ProgressBar :value="parseFloat(selected.biometricsScore) * 100" class="mt-2" />
-                <p class="text-xs text-gray-600 mt-1">{{ formatNumber(parseFloat(selected.biometricsScore)) }}</p>
-              </div>
-            </div>
+          <!-- TAB 5: Buró de Crédito -->
+          <TabPanel header="Buró de Crédito" value="4">
+            <CreditBureauCheck />
           </TabPanel>
 
           <!-- TAB 6: Decisión -->
@@ -332,6 +313,7 @@ import Textarea from 'primevue/textarea';
 import ProgressBar from 'primevue/progressbar';
 import { formatNumber } from '../../utils/number-utils';
 import api from '../../services/api';
+import CreditBureauCheck from '../../components/CreditBureauCheck.vue';
 
 const toast = useToast();
 const applications = ref<any[]>([]);
