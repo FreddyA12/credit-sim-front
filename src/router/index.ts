@@ -5,13 +5,11 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/',
+      path: '/login',
       component: () => import('../layouts/AuthLayout.vue'),
       meta: { public: true },
       children: [
-        { path: '', redirect: '/login' },
-        { path: 'login', name: 'login', component: () => import('../views/auth/LoginView.vue') },
-        { path: 'register', name: 'register', component: () => import('../views/auth/RegisterView.vue') },
+        { path: '', name: 'login', component: () => import('../views/auth/LoginView.vue') },
       ],
     },
     {
@@ -30,17 +28,30 @@ const router = createRouter({
       ],
     },
     {
-      path: '/client',
-      component: () => import('../layouts/ClientLayout.vue'),
-      meta: { requiresAuth: true, role: 'client' },
+      path: '/superadmin',
+      component: () => import('../layouts/SuperAdminLayout.vue'),
+      meta: { requiresAuth: true, role: 'superadmin' },
       children: [
-        { path: '', redirect: '/client/credit-simulator' },
-        { path: 'credit-simulator', component: () => import('../views/client/CreditSimulator.vue') },
-        { path: 'credit-application', component: () => import('../views/client/CreditApplication.vue') },
-        { path: 'investment-simulator', component: () => import('../views/client/InvestmentSimulator.vue') },
-        { path: 'investment-application', component: () => import('../views/client/InvestmentApplication.vue') },
+        { path: '', redirect: '/superadmin/dashboard' },
+        { path: 'dashboard', component: () => import('../views/superadmin/SuperAdminDashboard.vue') },
+        { path: 'institutions', component: () => import('../views/superadmin/InstitutionsManager.vue') },
+        { path: 'bce-rate-limits', component: () => import('../views/superadmin/BceRateLimitsManager.vue') },
       ],
     },
+    {
+      path: '/:slug',
+      component: () => import('../layouts/ClientLayout.vue'),
+      meta: { public: true },
+      children: [
+        { path: '', component: () => import('../views/client/SlugHome.vue') },
+        { path: 'creditos', component: () => import('../views/client/CreditSimulator.vue') },
+        { path: 'solicitar-credito', component: () => import('../views/client/CreditApplication.vue') },
+        { path: 'inversiones', component: () => import('../views/client/InvestmentSimulator.vue') },
+        { path: 'invertir', component: () => import('../views/client/InvestmentApplication.vue') },
+        { path: 'estado', component: () => import('../views/client/StatusView.vue') },
+      ],
+    },
+    { path: '/', redirect: '/login' },
     { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],
 });
@@ -49,8 +60,12 @@ router.beforeEach((to, _from, next) => {
   const auth = useAuthStore();
   if (to.meta.public) return next();
   if (!auth.isAuthenticated) return next('/login');
-  if (to.meta.role === 'admin' && !auth.isAdmin) return next('/client');
-  if (to.meta.role === 'client' && auth.isAdmin) return next('/admin');
+  if (to.meta.role === 'admin' && !auth.isAdmin) {
+    return next(auth.isSuperAdmin ? '/superadmin' : '/login');
+  }
+  if (to.meta.role === 'superadmin' && !auth.isSuperAdmin) {
+    return next(auth.isAdmin ? '/admin' : '/login');
+  }
   next();
 });
 
