@@ -126,19 +126,18 @@ const form = ref(emptyForm());
 
 const segmentOptions = [
   { label: 'Consumo', value: 'consumo' },
-  { label: 'Consumo ordinario', value: 'consumo_ordinario' },
-  { label: 'Consumo prioritario', value: 'consumo_prioritario' },
-  { label: 'Hipotecario', value: 'hipotecario' },
-  { label: 'Vivienda interés social', value: 'vivienda_interes_social' },
-  { label: 'Vivienda interés público', value: 'vivienda_interes_publico' },
-  { label: 'Inmobiliario', value: 'inmobiliario' },
-  { label: 'Microcrédito minorista', value: 'microcredito_minorista' },
-  { label: 'Microcrédito acumulación simple', value: 'microcredito_acumulacion_simple' },
-  { label: 'Microcrédito acumulación ampliada', value: 'microcredito_acumulacion_ampliada' },
-  { label: 'Productivo PYMES', value: 'productivo_pymes' },
-  { label: 'Productivo empresarial', value: 'productivo_empresarial' },
-  { label: 'Productivo corporativo', value: 'productivo_corporativo' },
   { label: 'Educativo', value: 'educativo' },
+  { label: 'Educativo Social', value: 'educativo_social' },
+  { label: 'Vivienda de Interés Público', value: 'vivienda_interes_publico' },
+  { label: 'Vivienda de Interés Social', value: 'vivienda_interes_social' },
+  { label: 'Inmobiliario', value: 'inmobiliario' },
+  { label: 'Microcrédito Minorista', value: 'microcredito_minorista' },
+  { label: 'Microcrédito de Acumulación Simple', value: 'microcredito_acumulacion_simple' },
+  { label: 'Microcrédito de Acumulación Ampliada', value: 'microcredito_acumulacion_ampliada' },
+  { label: 'Productivo PYMES', value: 'productivo_pymes' },
+  { label: 'Productivo Empresarial', value: 'productivo_empresarial' },
+  { label: 'Productivo Corporativo', value: 'productivo_corporativo' },
+  { label: 'Inversión Pública', value: 'inversion_publica' },
 ];
 
 onMounted(async () => {

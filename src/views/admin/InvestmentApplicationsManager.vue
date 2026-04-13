@@ -13,17 +13,17 @@
         <template #body="{ data }">{{ productName(data) }}</template>
       </Column>
       <Column header="Monto">
-        <template #body="{ data }">${{ fmtMoney(data.amount) }}</template>
+        <template #body="{ data }">${{ formatNumber(data.amount) }}</template>
       </Column>
       <Column field="termDays" header="Plazo (días)" />
       <Column header="Interés bruto">
-        <template #body="{ data }">${{ fmtMoney(data.grossInterest) }}</template>
+        <template #body="{ data }">${{ formatNumber(data.grossInterest) }}</template>
       </Column>
       <Column header="Retención IR">
-        <template #body="{ data }">${{ fmtMoney(data.irWithholding) }}</template>
+        <template #body="{ data }">${{ formatNumber(data.irWithholding) }}</template>
       </Column>
       <Column header="Interés neto">
-        <template #body="{ data }">${{ fmtMoney(data.netInterest) }}</template>
+        <template #body="{ data }">${{ formatNumber(data.netInterest) }}</template>
       </Column>
       <Column header="Estado">
         <template #body="{ data }">
@@ -74,8 +74,8 @@
               <div class="bg-gray-50 p-4 rounded">
                 <h3 class="font-bold text-gray-700 mb-3">Detalles del Producto</h3>
                 <div class="space-y-2">
-                  <div><span class="font-medium">Producto:</span> {{ productName(selectedApp) }}</div>
-                  <div><span class="font-medium">Monto:</span> ${{ fmtMoney(selectedApp.amount) }}</div>
+                  <div><span class="font-medium">Producto:</span> {{ selectedApp.product?.name }}</div>
+                  <div><span class="font-medium">Monto:</span> ${{ formatNumber(selectedApp.amount) }}</div>
                   <div><span class="font-medium">Plazo:</span> {{ selectedApp.termDays }} días</div>
                   <div><span class="font-medium">Tasa aplicada:</span> {{ fmtRate(selectedApp.appliedRate) }}</div>
                   <div><span class="font-medium">Frecuencia de pago:</span> {{ paymentFrequencyLabel(selectedApp.paymentFrequency) }}</div>
@@ -85,10 +85,10 @@
               <div class="bg-green-50 p-4 rounded md:col-span-2">
                 <h3 class="font-bold text-gray-700 mb-3">Cálculos Financieros</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div><span class="font-medium">Interés bruto:</span> ${{ fmtMoney(selectedApp.grossInterest) }}</div>
-                  <div><span class="font-medium">Retención IR:</span> ${{ fmtMoney(selectedApp.irWithholding) }}</div>
-                  <div><span class="font-medium">Interés neto:</span> ${{ fmtMoney(selectedApp.netInterest) }}</div>
-                  <div><span class="font-medium">Al vencimiento:</span> <strong class="text-green-700">${{ fmtMoney(selectedApp.amountAtMaturity) }}</strong></div>
+                  <div><span class="font-medium">Interés bruto:</span> ${{ formatNumber(selectedApp.grossInterest) }}</div>
+                  <div><span class="font-medium">Retención IR:</span> ${{ formatNumber(selectedApp.irWithholding) }}</div>
+                  <div><span class="font-medium">Interés neto:</span> ${{ formatNumber(selectedApp.netInterest) }}</div>
+                  <div><span class="font-medium">Al vencimiento:</span> <strong class="text-green-700">${{ formatNumber(selectedApp.amountAtMaturity) }}</strong></div>
                 </div>
               </div>
 
@@ -115,23 +115,23 @@
                 <Column field="accumulatedDays" header="Días acumulados" :sortable="true"></Column>
                 <Column field="grossInterest" header="Interés bruto">
                   <template #body="{ data }">
-                    ${{ fmtMoney(data.grossInterest) }}
+                    ${{ formatNumber(data.grossInterest) }}
                   </template>
                 </Column>
                 <Column field="irWithholding" header="Retención IR (2%)">
                   <template #body="{ data }">
-                    ${{ fmtMoney(data.irWithholding) }}
+                    ${{ formatNumber(data.irWithholding) }}
                   </template>
                 </Column>
                 <Column field="netInterest" header="Interés neto">
                   <template #body="{ data }">
-                    ${{ fmtMoney(data.netInterest) }}
+                    ${{ formatNumber(data.netInterest) }}
                   </template>
                 </Column>
                 <Column field="totalAtMaturity" header="Total al vencimiento">
                   <template #body="{ data }">
-                    <span v-if="data.totalAtMaturity != null && data.totalAtMaturity !== ''" class="font-bold text-green-600">
-                      ${{ fmtMoney(data.totalAtMaturity) }}
+                    <span v-if="data.totalAtMaturity" class="font-bold text-green-600">
+                      ${{ formatNumber(data.totalAtMaturity) }}
                     </span>
                     <span v-else class="text-gray-400">—</span>
                   </template>
@@ -260,6 +260,7 @@ import TabPanel from 'primevue/tabpanel';
 import Textarea from 'primevue/textarea';
 import api from '../../services/api';
 import { paymentFrequencyLabel } from '../../utils/investment-payment-frequency';
+import { formatNumber } from '../../utils/number-utils';
 
 const toast = useToast();
 const applications = ref<any[]>([]);

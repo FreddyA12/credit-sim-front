@@ -33,6 +33,14 @@
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
                 <InputNumber v-model="form.netIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
+                <div v-if="maxPaymentCapacity !== null" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <p class="font-semibold text-blue-900">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    Con tus ingresos puedes pagar hasta:
+                  </p>
+                  <p class="text-lg font-bold text-blue-700 mt-1">${{ formatNumber(maxPaymentCapacity) }} USD/mes</p>
+                  <small class="text-gray-600">Calculado como el 40% de tus ingresos netos</small>
+                </div>
               </div>
             </div>
             <div v-if="maxPaymentCapacity !== null" class="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
@@ -54,7 +62,7 @@
     <div v-if="result" class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mb-4">
       <div class="text-sm text-gray-700 flex flex-wrap gap-4">
         <span><strong>{{ selectedType?.name }}</strong></span>
-        <span>Monto: <strong>${{ form.amount?.toFixed(2) }}</strong></span>
+        <span>Monto: <strong>${{ formatNumber(form.amount) }}</strong></span>
         <span>Plazo: <strong>{{ formatTermMonths(form.termMonths) }}</strong></span>
         <span>Sistema: <strong>{{ form.amortizationSystem === 'french' ? 'Francés' : 'Alemán' }}</strong></span>
       </div>
@@ -157,7 +165,7 @@ import AmortizationTable from '../../components/AmortizationTable.vue';
 import LegalNote from '../../components/LegalNote.vue';
 import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
 import { usePdf } from '../../composables/usePdf';
-import { formatCurrency } from '../../utils/financial-calculations';
+import { formatNumber, ensureNumbers } from '../../utils/number-utils';
 
 const route = useRoute();
 const router = useRouter();
