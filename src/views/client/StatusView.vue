@@ -5,8 +5,8 @@
       <template #content>
         <form @submit.prevent="search" class="flex gap-3 items-end">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-sm font-medium">Número de cédula</label>
-            <InputText v-model="idNumber" placeholder="Ingrese su cédula" maxlength="10" />
+            <label class="text-sm font-medium">Número de cédula o RUC</label>
+            <InputText v-model="idNumber" placeholder="Ingrese su cédula o RUC" maxlength="13" />
           </div>
           <Button type="submit" label="Consultar" icon="pi pi-search" :loading="loading" />
         </form>
@@ -121,7 +121,7 @@ const approvedDocuments = ref<Record<string, any[]>>({});
 
 async function search() {
   if (!idNumber.value || idNumber.value.length < 10) {
-    return toast.add({ severity: 'warn', summary: 'Ingrese su número de cédula (10 dígitos)', life: 3000 });
+    return toast.add({ severity: 'warn', summary: 'Ingrese su número de cédula (10 dígitos) o RUC (13 dígitos)', life: 3000 });
   }
   loading.value = true;
   try {
