@@ -74,10 +74,6 @@
           <p class="lp-welcome">Bienvenido de nuevo</p>
           <h1 class="lp-title">Iniciar sesión</h1>
           <RouterView />
-          <p class="lp-footer">
-            ¿Sin acceso? Contacta al
-            <a href="mailto:soporte@finsim.ec">administrador</a>
-          </p>
         </div>
       </div>
 
