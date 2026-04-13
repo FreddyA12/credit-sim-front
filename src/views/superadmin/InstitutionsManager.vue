@@ -63,18 +63,18 @@
             <label class="text-sm font-medium">Slogan</label>
             <InputText v-model="instForm.slogan" />
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 min-w-0">
             <label class="text-sm font-medium">Color primario</label>
-            <div class="flex gap-2 items-center">
-              <input type="color" v-model="instForm.primaryColor" class="h-9 w-12 cursor-pointer rounded" />
-              <InputText v-model="instForm.primaryColor" class="flex-1" />
+            <div class="flex gap-2 items-center min-w-0">
+              <input type="color" v-model="instForm.primaryColor" class="h-9 w-12 shrink-0 cursor-pointer rounded" />
+              <InputText v-model="instForm.primaryColor" class="flex-1 min-w-0" />
             </div>
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 min-w-0">
             <label class="text-sm font-medium">Color secundario</label>
-            <div class="flex gap-2 items-center">
-              <input type="color" v-model="instForm.secondaryColor" class="h-9 w-12 cursor-pointer rounded" />
-              <InputText v-model="instForm.secondaryColor" class="flex-1" />
+            <div class="flex gap-2 items-center min-w-0">
+              <input type="color" v-model="instForm.secondaryColor" class="h-9 w-12 shrink-0 cursor-pointer rounded" />
+              <InputText v-model="instForm.secondaryColor" class="flex-1 min-w-0" />
             </div>
           </div>
         </div>

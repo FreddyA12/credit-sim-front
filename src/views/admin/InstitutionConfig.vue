@@ -16,6 +16,15 @@
         <div v-if="institution?.type" class="inst-badge">
           {{ typeLabel }}
         </div>
+        <a
+          v-if="institution?.slug"
+          :href="`${origin}/${institution.slug}`"
+          target="_blank"
+          class="slug-link"
+        >
+          <i class="pi pi-link" />
+          {{ origin }}/{{ institution.slug }}
+        </a>
       </div>
     </div>
 
@@ -392,6 +401,8 @@ const cssVars = computed(() => {
   };
 });
 
+const origin = window.location.origin;
+
 const tabs = [
   { key: 'general',  icon: 'pi pi-file-edit',  label: 'Información General' },
   { key: 'contact',  icon: 'pi pi-phone',       label: 'Contacto' },
@@ -585,6 +596,24 @@ async function onFileChange(event: Event) {
   border-radius: 9999px;
   border: 1px solid rgba(10, 22, 40, 0.08);
   white-space: nowrap;
+}
+.slug-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--inst-primary, #1A3C6E);
+  text-decoration: none;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(var(--inst-primary, #1A3C6E), 0.2);
+  background: rgba(26, 60, 110, 0.05);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.slug-link:hover {
+  background: rgba(26, 60, 110, 0.1);
 }
 
 /* ── Tabs ── */

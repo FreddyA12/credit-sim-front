@@ -3,15 +3,10 @@
 
     <!-- ── SIDEBAR ── -->
     <aside
-      class="sidebar"
-      :class="isDefaultTheme ? 'sidebar--dark' : 'sidebar--light'"
+      class="sidebar sidebar--dark"
       :style="sidebarVars"
     >
-      <!-- Patrón de puntos (solo en modo dark) -->
-      <div v-if="isDefaultTheme" class="dot-grid"></div>
-
-      <!-- Franja de color corporativo (solo en modo light) -->
-      <div v-if="!isDefaultTheme" class="sb-accent-strip"></div>
+      <div class="dot-grid"></div>
 
       <!-- ── Cabecera con logo ── -->
       <div class="sb-header">
@@ -54,13 +49,9 @@
           :to="link.to"
           class="sb-link"
           :class="{ 'sb-link--active': isActive(link.to) }"
-          :style="isActive(link.to) && !isDefaultTheme ? activeLinkStyle : {}"
         >
           <span class="sb-link-bar" v-if="isActive(link.to)"></span>
-          <span
-            class="sb-link-icon"
-            :style="isActive(link.to) && !isDefaultTheme ? activeIconStyle : {}"
-          >
+          <span class="sb-link-icon">
             <i :class="link.icon" />
           </span>
           <span class="sb-link-label">{{ link.label }}</span>
@@ -141,23 +132,12 @@ const navLinks = [
 ];
 
 // ── ¿Paleta por defecto? ────────────────────────────────────────────────────
-// Si los colores son los navy/gold originales → sidebar oscuro (como login)
-// Si cambian a colores corporativos propios   → sidebar blanco con esos colores
-const isDefaultTheme = computed(() => {
-  const p = (institution.value?.primaryColor   || DEFAULT_PRIMARY).toLowerCase().trim();
-  const s = (institution.value?.secondaryColor || DEFAULT_SECONDARY).toLowerCase().trim();
-  return p === DEFAULT_PRIMARY.toLowerCase() && s === DEFAULT_SECONDARY.toLowerCase();
-});
-
-// CSS custom properties inyectadas en el sidebar para que todos los
-// elementos hereden los colores sin necesidad de :style individuales
 const sidebarVars = computed(() => {
-  const primary   = institution.value?.primaryColor   || '#1A3C6E';
-  const secondary = institution.value?.secondaryColor || '#F5A623';
+  const primary   = institution.value?.primaryColor   || DEFAULT_PRIMARY;
+  const secondary = institution.value?.secondaryColor || DEFAULT_SECONDARY;
   return {
     '--sb-primary':   primary,
     '--sb-secondary': secondary,
-    '--sb-accent':    isDefaultTheme.value ? '#c9a84c' : primary,
   };
 });
 
@@ -186,8 +166,7 @@ const activeIconStyle = computed(() => {
 });
 
 const avatarStyle = computed(() => {
-  const p = institution.value?.primaryColor || '#1A3C6E';
-  if (isDefaultTheme.value) return {};
+  const p = institution.value?.primaryColor || DEFAULT_PRIMARY;
   return {
     background: hexWithOpacity(p, 0.12),
     borderColor: hexWithOpacity(p, 0.4),
@@ -248,7 +227,7 @@ onMounted(() => {
   transition: background 0.35s, box-shadow 0.35s;
 }
 
-/* ── Modo OSCURO — paleta navy/gold (igual que login) ── */
+/* ── Modo OSCURO ── */
 .sidebar--dark {
   background: #0a1628;
 }
@@ -260,53 +239,25 @@ onMounted(() => {
   pointer-events: none;
   z-index: 0;
 }
-.sidebar--dark .sb-accent-strip { display: none; }
 .sidebar--dark .sb-header        { position: relative; z-index: 1; }
 .sidebar--dark .sb-logo-frame    { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
 .sidebar--dark .sb-logo-fallback { color: #c9a84c; border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.08); }
-.sidebar--dark .sb-inst-name     { color: #f1f5f9; }
-.sidebar--dark .sb-inst-sub      { color: #475569; }
-.sidebar--dark .sb-sep           { background: rgba(255,255,255,0.06); }
-.sidebar--dark .sb-nav-label     { color: #334155; }
-.sidebar--dark .sb-link          { color: #64748b; }
-.sidebar--dark .sb-link:hover    { background: rgba(255,255,255,0.05); color: #cbd5e1; }
-.sidebar--dark .sb-link--active  { background: rgba(201,168,76,0.1); color: #c9a84c; }
-.sidebar--dark .sb-link--active .sb-link-icon { background: rgba(201,168,76,0.15); color: #c9a84c; }
+.sidebar--dark .sb-inst-name     { color: #ffffff; }
+.sidebar--dark .sb-inst-sub      { color: rgba(255,255,255,0.5); letter-spacing: 0.08em; }
+.sidebar--dark .sb-sep           { background: rgba(255,255,255,0.08); }
+.sidebar--dark .sb-nav-label     { color: rgba(255,255,255,0.4); letter-spacing: 0.14em; }
+.sidebar--dark .sb-link          { color: rgba(255,255,255,0.75); }
+.sidebar--dark .sb-link:hover    { background: rgba(255,255,255,0.06); color: #ffffff; }
+.sidebar--dark .sb-link--active  { background: rgba(201,168,76,0.14); color: #ffffff; font-weight: 600; }
+.sidebar--dark .sb-link--active .sb-link-icon { background: rgba(201,168,76,0.22); color: #ffffff; }
 .sidebar--dark .sb-link--active .sb-link-bar  { background: #c9a84c; }
-.sidebar--dark .sb-link:hover .sb-link-icon   { background: rgba(255,255,255,0.07); color: #94a3b8; }
-.sidebar--dark .sb-user          { border-top-color: rgba(255,255,255,0.06); background: rgba(0,0,0,0.15); }
-.sidebar--dark .sb-user-avatar   { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.3); color: #c9a84c; }
-.sidebar--dark .sb-user-name     { color: #e2e8f0; }
-.sidebar--dark .sb-user-sub      { color: #475569; }
-.sidebar--dark .sb-logout        { color: #475569; border-color: rgba(255,255,255,0.1); }
-.sidebar--dark .sb-logout:hover  { color: #f87171; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); }
-
-/* ── Modo CLARO — paleta corporativa propia ── */
-.sidebar--light {
-  background: #ffffff;
-  border-right: 1px solid #e8ecf2;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.04);
-}
-.sidebar--light .dot-grid          { display: none; }
-.sidebar--light .sb-accent-strip   { height: 4px; background: var(--sb-primary); flex-shrink: 0; }
-.sidebar--light .sb-logo-frame     { background: #f8fafc; border-color: #e8ecf2; }
-.sidebar--light .sb-logo-fallback  { color: var(--sb-primary); border-color: var(--sb-primary); background: #f8fafc; }
-.sidebar--light .sb-inst-name      { color: #0f172a; }
-.sidebar--light .sb-inst-sub       { color: #94a3b8; }
-.sidebar--light .sb-sep            { background: #f1f4f9; }
-.sidebar--light .sb-nav-label      { color: #b8c0cc; }
-.sidebar--light .sb-link           { color: #64748b; }
-.sidebar--light .sb-link:hover     { background: #f4f6fa; color: #1e293b; }
-.sidebar--light .sb-link--active   { /* color y background vienen de activeLinkStyle */ }
-.sidebar--light .sb-link--active .sb-link-icon { /* vienen de activeIconStyle */ }
-.sidebar--light .sb-link--active .sb-link-bar  { background: var(--sb-primary); }
-.sidebar--light .sb-link:hover .sb-link-icon   { background: #edf0f7; color: #475569; }
-.sidebar--light .sb-user           { border-top-color: #f1f4f9; background: #fafbfd; }
-.sidebar--light .sb-user-avatar    { /* viene de avatarStyle */ }
-.sidebar--light .sb-user-name      { color: #1e293b; }
-.sidebar--light .sb-user-sub       { color: #94a3b8; }
-.sidebar--light .sb-logout         { color: #94a3b8; border-color: #e8ecf2; }
-.sidebar--light .sb-logout:hover   { color: #ef4444; background: #fef2f2; border-color: #fca5a5; }
+.sidebar--dark .sb-link:hover .sb-link-icon   { background: rgba(255,255,255,0.1); color: #ffffff; }
+.sidebar--dark .sb-user          { border-top-color: rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); position: relative; z-index: 1; }
+.sidebar--dark .sb-user-avatar   { background: rgba(201,168,76,0.18); border-color: rgba(201,168,76,0.45); color: #ffffff; }
+.sidebar--dark .sb-user-name     { color: #ffffff; }
+.sidebar--dark .sb-user-sub      { color: rgba(255,255,255,0.5); }
+.sidebar--dark .sb-logout        { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); }
+.sidebar--dark .sb-logout:hover  { color: #f87171; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.35); }
 
 /* ──────────────────────────────────────────────────────
    Elementos del sidebar — estructurales (sin color)
