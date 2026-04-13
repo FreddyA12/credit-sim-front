@@ -20,7 +20,7 @@
             <template #body="{ data }">
               <div class="flex gap-2">
                 <Button icon="pi pi-user-plus" size="small" text severity="secondary" title="Crear admin" @click="openCreateAdmin(data)" />
-                <Button icon="pi pi-trash" size="small" text severity="danger" @click="deleteInstitution(data.id)" />
+                <Button icon="pi pi-ban" size="small" text severity="danger" title="Desactivar institución" @click="deleteInstitution(data.id)" />
               </div>
             </template>
           </Column>
@@ -191,13 +191,13 @@ async function saveAdmin() {
 }
 
 async function deleteInstitution(id: string) {
-  if (!confirm('¿Está seguro de eliminar esta institución?')) return;
+  if (!confirm('¿Está seguro de desactivar esta institución?')) return;
   try {
     await api.delete(`/superadmin/institutions/${id}`);
     await loadInstitutions();
-    toast.add({ severity: 'success', summary: 'Institución eliminada', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Institución desactivada', life: 3000 });
   } catch (e: any) {
-    toast.add({ severity: 'error', summary: 'Error', detail: e.response?.data?.message || 'No se pudo eliminar', life: 4000 });
+    toast.add({ severity: 'error', summary: 'Error', detail: e.response?.data?.message || 'No se pudo desactivar', life: 4000 });
   }
 }
 </script>
