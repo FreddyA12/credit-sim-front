@@ -191,32 +191,8 @@
             </div>
           </TabPanel>
 
-          <!-- TAB 5: Biometría -->
-          <TabPanel header="Biometría y Validación" value="4">
-            <div class="space-y-4">
-              <div class="p-4 rounded-lg" :class="selected.biometricsValidated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="font-medium" :class="selected.biometricsValidated ? 'text-green-900' : 'text-yellow-900'">
-                      Estado de validación biométrica
-                    </p>
-                    <p class="text-sm mt-1" :class="selected.biometricsValidated ? 'text-green-700' : 'text-yellow-700'">
-                      {{ selected.biometricsValidated ? 'Verificado' : 'Pendiente de verificación' }}
-                    </p>
-                  </div>
-                  <Tag :value="selected.biometricsValidated ? 'Verificado' : 'Pendiente'" :severity="selected.biometricsValidated ? 'success' : 'warn'" />
-                </div>
-              </div>
-              <div v-if="selected.biometricsScore">
-                <p class="text-sm font-medium text-gray-700">Puntuación biométrica</p>
-                <ProgressBar :value="parseFloat(selected.biometricsScore) * 100" class="mt-2" />
-                <p class="text-xs text-gray-600 mt-1">{{ formatNumber(parseFloat(selected.biometricsScore)) }}</p>
-              </div>
-            </div>
-          </TabPanel>
-
-          <!-- TAB 6: Decisión -->
-          <TabPanel header="Decisión y Notas" value="5">
+          <!-- TAB 5: Decisión -->
+          <TabPanel header="Decisión y Notas" value="4">
             <div class="space-y-4">
               <div>
                 <label class="text-sm font-medium text-gray-700">Decisión</label>
