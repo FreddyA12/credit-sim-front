@@ -1,65 +1,112 @@
 <template>
   <div>
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Tasas Máximas JPRF</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        Actualiza estas tasas cada vez que el Banco Central del Ecuador publique una nueva resolución.
-        Ninguna institución podrá configurar una tasa superior al límite aquí establecido.
-      </p>
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header>
+        <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Regulación</p>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Tasas máximas JPRF</h1>
+        <p class="mt-1 max-w-2xl text-sm text-slate-600">
+          Límites legales de tasas activas efectivas máximas por segmento BCE.
+          Ninguna institución puede superar estas tasas al configurar sus créditos.
+        </p>
+      </header>
     </div>
 
-    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
-      <i class="pi pi-exclamation-triangle text-amber-500 mt-0.5" />
-      <div class="text-sm text-amber-800">
-        <strong>¿Cuándo actualizar?</strong> Cuando el BCE publique nuevas tasas en
-        <em>contenido.bce.fin.ec → Estadísticas → Tasas de Interés → Tasas Activas Efectivas Máximas</em>.
-        Al guardar, todos los tipos de crédito nuevos quedarán sujetos al nuevo límite.
-      </div>
+    <div class="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+      <span class="font-medium text-slate-800">¿Cuándo actualizar?</span>
+      Cuando el BCE publique nuevas resoluciones en
+      <em>contenido.bce.fin.ec → Estadísticas → Tasas de Interés → Tasas Activas Efectivas Máximas</em>.
+      Al guardar, los tipos de crédito nuevos quedarán sujetos al nuevo límite.
     </div>
 
-    <DataTable :value="rates" :loading="loading" stripedRows class="text-sm">
-      <Column field="segmentLabel" header="Segmento BCE" />
-      <Column header="Tasa máxima vigente">
-        <template #body="{ data }">
-          <span class="font-semibold text-red-600">{{ Number(data.maxRate).toFixed(2) }}%</span>
-        </template>
-      </Column>
-      <Column field="legalSource" header="Fuente legal" class="text-xs text-gray-500" />
-      <Column field="effectiveDate" header="Vigente desde" />
-      <Column header="Actualizar">
-        <template #body="{ data }">
-          <Button icon="pi pi-pencil" severity="warning" text rounded size="small" @click="openEdit(data)" />
-        </template>
-      </Column>
-    </DataTable>
+    <Card class="border-slate-200 shadow-sm">
+      <template #content>
+        <DataTable :value="rates" :loading="loading" stripedRows>
+          <Column field="segmentLabel" header="Segmento BCE" :sortable="true">
+            <template #body="{ data }">
+              <span class="font-medium">{{ data.segmentLabel }}</span>
+            </template>
+          </Column>
+          <Column header="Tasa máxima vigente (%)" :sortable="true">
+            <template #body="{ data }">
+              <span class="font-semibold text-slate-900">{{ Number(data.maxRate).toFixed(2) }}%</span>
+            </template>
+          </Column>
+          <Column field="legalSource" header="Fuente legal">
+            <template #body="{ data }">
+              <span class="text-xs text-slate-600">{{ data.legalSource }}</span>
+            </template>
+          </Column>
+          <Column field="effectiveDate" header="Vigente desde">
+            <template #body="{ data }">
+              <span class="text-sm">{{ data.effectiveDate }}</span>
+            </template>
+          </Column>
+          <Column header="Acciones">
+            <template #body="{ data }">
+              <Button
+                icon="pi pi-pencil"
+                size="small"
+                severity="secondary"
+                text
+                rounded
+                v-tooltip.top="'Editar'"
+                @click="openEdit(data)"
+              />
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
 
-    <Dialog v-model:visible="dialogVisible" header="Actualizar tasa máxima JPRF" modal class="w-full max-w-lg">
-      <div v-if="editing" class="flex flex-col gap-4 pt-2">
-        <div class="bg-gray-50 rounded p-3 text-sm">
-          <p class="font-semibold text-gray-700">{{ editing.segmentLabel }}</p>
-          <p class="text-gray-500 text-xs mt-1">Tasa actual: <strong>{{ Number(editing.maxRate).toFixed(2) }}%</strong></p>
+    <Dialog
+      v-model:visible="dialogVisible"
+      modal
+      header="Actualizar tasa máxima JPRF"
+      :style="{ width: '520px' }"
+    >
+      <div v-if="editing" class="space-y-4">
+        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <p class="font-semibold text-slate-800">{{ editing.segmentLabel }}</p>
+          <p class="mt-0.5 text-xs text-slate-500">
+            Tasa actual: <strong>{{ Number(editing.maxRate).toFixed(2) }}%</strong>
+          </p>
         </div>
 
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Nueva tasa máxima (%)</label>
-          <InputNumber v-model="form.maxRate" :min="0" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid />
+        <div>
+          <label class="text-sm font-medium block mb-2">Nueva tasa máxima (%)</label>
+          <InputNumber
+            v-model="form.maxRate"
+            :min="0"
+            :max="100"
+            :minFractionDigits="2"
+            :maxFractionDigits="2"
+            fluid
+          />
         </div>
 
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Número de resolución / Fuente legal</label>
-          <InputText v-model="form.legalSource" class="w-full text-sm" placeholder="Ej: Resolución No. JPRF-F-2025-0010 de 01-ene-2025..." />
+        <div>
+          <label class="text-sm font-medium block mb-2">Número de resolución / Fuente legal</label>
+          <InputText
+            v-model="form.legalSource"
+            class="w-full"
+            placeholder="Ej: Resolución No. JPRF-F-2025-0010 de 01-ene-2025..."
+          />
         </div>
 
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Fecha de vigencia</label>
-          <InputText v-model="form.effectiveDate" class="w-full" placeholder="YYYY-MM-DD" />
-        </div>
-
-        <div class="flex justify-end gap-2 mt-2">
-          <Button label="Cancelar" severity="secondary" @click="dialogVisible = false" />
-          <Button label="Guardar" :loading="saving" @click="save" />
+        <div>
+          <label class="text-sm font-medium block mb-2">Fecha de vigencia</label>
+          <InputText
+            v-model="form.effectiveDate"
+            class="w-full"
+            placeholder="YYYY-MM-DD"
+          />
         </div>
       </div>
+
+      <template #footer>
+        <Button label="Cancelar" severity="secondary" @click="dialogVisible = false" />
+        <Button label="Guardar" icon="pi pi-check" :loading="saving" @click="save" />
+      </template>
     </Dialog>
   </div>
 </template>
@@ -67,6 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -83,12 +131,17 @@ const dialogVisible = ref(false);
 const editing = ref<any>(null);
 const form = ref({ maxRate: 0, legalSource: '', effectiveDate: '' });
 
-onMounted(async () => {
+async function loadRates() {
   loading.value = true;
-  const { data } = await api.get('/superadmin/jprf-rates');
-  rates.value = data;
-  loading.value = false;
-});
+  try {
+    const { data } = await api.get('/superadmin/jprf-rates');
+    rates.value = data;
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'No se pudieron cargar las tasas', life: 4000 });
+  } finally {
+    loading.value = false;
+  }
+}
 
 function openEdit(rate: any) {
   editing.value = rate;
@@ -114,4 +167,8 @@ async function save() {
     saving.value = false;
   }
 }
+
+onMounted(() => {
+  loadRates();
+});
 </script>
