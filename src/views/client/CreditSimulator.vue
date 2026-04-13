@@ -58,7 +58,7 @@
         <span>Sistema: <strong>{{ form.amortizationSystem === 'french' ? 'Francés' : 'Alemán' }}</strong></span>
       </div>
       <div class="flex gap-2 ml-4">
-        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="formCollapsed = false" />
+        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="backToEdit" />
         <Button label="Descargar PDF" icon="pi pi-download" severity="info" size="small" @click="downloadPdf" />
         <Button label="Solicitar" icon="pi pi-file-edit" severity="success" size="small" @click="goToApplication" />
       </div>
@@ -140,6 +140,11 @@ const legalNotes = computed(() => {
 });
 
 function onTypeChange() { result.value = null; formCollapsed.value = false; form.value.amortizationSystem = 'french'; }
+
+function backToEdit() {
+  result.value = null;
+  formCollapsed.value = false;
+}
 
 function formatTermMonths(months: number): string {
   const y = Math.floor(months / 12);

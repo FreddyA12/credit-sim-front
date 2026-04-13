@@ -95,7 +95,7 @@
         <span>Pago de intereses: <strong>{{ paymentFrequencyLabel(selectedProduct?.paymentFrequency) }}</strong></span>
       </div>
       <div class="flex flex-wrap gap-2 sm:ml-4">
-        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="formCollapsed = false" />
+        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="backToEdit" />
         <Button label="Descargar PDF" icon="pi pi-download" severity="info" size="small" @click="downloadPdf" />
         <Button label="Invertir" icon="pi pi-wallet" severity="success" size="small" @click="goToApplication" />
       </div>
@@ -290,6 +290,11 @@ function onProductChange() {
   formCollapsed.value = false;
   const p = selectedProduct.value;
   form.value.termDays = p ? Number(p.minTermDays) : null;
+}
+
+function backToEdit() {
+  result.value = null;
+  formCollapsed.value = false;
 }
 
 onMounted(async () => {
