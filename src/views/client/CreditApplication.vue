@@ -1001,7 +1001,7 @@ function nextStep() {
   activeStep.value++;
 }
 
-function onBiometricVerified(_descriptor: Float32Array) {
+function onBiometricVerified() {
   biometricVerified.value = true;
   toast.add({ severity: 'success', summary: 'Identidad verificada', life: 3000 });
 }

@@ -95,7 +95,7 @@
         <span>Pago de intereses: <strong>{{ paymentFrequencyLabel(selectedProduct?.paymentFrequency) }}</strong></span>
       </div>
       <div class="flex flex-wrap gap-2 sm:ml-4">
-        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="formCollapsed = false" />
+        <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="backToEdit" />
         <Button label="Descargar PDF" icon="pi pi-download" severity="info" size="small" @click="downloadPdf" />
         <Button label="Invertir" icon="pi pi-wallet" severity="success" size="small" @click="goToApplication" />
       </div>
@@ -184,7 +184,7 @@ import { useToast } from 'primevue/usetoast';
 import { useInstitutionStore } from '../../stores/institution.store';
 import LegalNote from '../../components/LegalNote.vue';
 import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
-import { usePdf } from '../../composables/usePdf';
+import { useInvestmentPdf } from '../../composables/useInvestmentPdf';
 import { formatCurrency } from '../../utils/financial-calculations';
 import { paymentFrequencyLabel } from '../../utils/investment-payment-frequency';
 import { formatNumber, ensureNumbers } from '../../utils/number-utils';
@@ -196,7 +196,7 @@ const toast = useToast();
 const slug = computed(() => route.params.slug as string);
 const institutionStore = useInstitutionStore();
 const { institution } = storeToRefs(institutionStore);
-const { generateInvestmentPdf } = usePdf();
+const { generateInvestmentPdf } = useInvestmentPdf();
 
 const products = ref<any[]>([]);
 const loading = ref(false);
@@ -293,6 +293,11 @@ function onProductChange() {
   form.value.termDays = p ? Number(p.minTermDays) : null;
 }
 
+function backToEdit() {
+  result.value = null;
+  formCollapsed.value = false;
+}
+
 onMounted(async () => {
   const { data } = await api.get(`/public/${slug.value}/investment-products`);
   products.value = data;
@@ -351,8 +356,16 @@ function goToApplication() {
   });
 }
 
-function downloadPdf() {
+async function downloadPdf() {
   if (!result.value) return;
-  generateInvestmentPdf(result.value.summary, institution.value);
+  await generateInvestmentPdf(
+    {
+      summary: result.value.summary,
+      projectionTable: result.value.projectionTable,
+      productName: selectedProduct.value?.name,
+      paymentLabel: paymentFrequencyLabel(selectedProduct.value?.paymentFrequency),
+    },
+    institution.value,
+  );
 }
 </script>
