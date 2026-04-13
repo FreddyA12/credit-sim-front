@@ -191,8 +191,13 @@
             </div>
           </TabPanel>
 
-          <!-- TAB 5: Decisión -->
-          <TabPanel header="Decisión y Notas" value="4">
+          <!-- TAB 5: Buró de Crédito -->
+          <TabPanel header="Buró de Crédito" value="4">
+            <CreditBureauCheck />
+          </TabPanel>
+
+          <!-- TAB 6: Decisión -->
+          <TabPanel header="Decisión y Notas" value="5">
             <div class="space-y-4">
               <div>
                 <label class="text-sm font-medium text-gray-700">Decisión</label>
@@ -308,6 +313,7 @@ import Textarea from 'primevue/textarea';
 import ProgressBar from 'primevue/progressbar';
 import { formatNumber } from '../../utils/number-utils';
 import api from '../../services/api';
+import CreditBureauCheck from '../../components/CreditBureauCheck.vue';
 
 const toast = useToast();
 const applications = ref<any[]>([]);
