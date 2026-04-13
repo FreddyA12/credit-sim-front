@@ -138,6 +138,7 @@ export function usePdf() {
       ['Última cuota', formatMoney(summary.lastInstallment)],
       ['Total interés', formatMoney(summary.totalInterest)],
       ['SOLCA (0.5% — COMF Disp. Gral. 14ª)', formatMoney(summary.totalSolca)],
+      ...(summary.netDisbursement != null ? [['Usted recibe (monto − descuentos al desembolso)', formatMoney(summary.netDisbursement)]] : []),
     ];
 
     if (summary.totalDesgravamen > 0) {
