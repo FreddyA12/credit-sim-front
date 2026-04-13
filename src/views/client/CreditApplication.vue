@@ -342,33 +342,34 @@
             <div v-if="currentSimResult" class="flex flex-col gap-4">
               <!-- Cargos al desembolso (SOLCA, etc.) -->
               <div v-if="disbursementChargesEnriched.length" class="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                <p class="mb-3 text-sm font-semibold text-orange-900">
+                <p class="mb-4 text-sm font-semibold text-orange-900">
                   <i class="pi pi-wallet mr-1" />
                   Cargos al desembolso
-                  <span class="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-normal text-orange-700">independientes del interés</span>
+                  <span class="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-normal text-orange-700">se deducen del monto</span>
                 </p>
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4">
                   <div
                     v-for="charge in disbursementChargesEnriched"
                     :key="charge.name"
                     class="flex items-start justify-between text-sm"
+                    :class="charge.chargeType === 'solca' ? 'rounded-lg bg-white p-3' : ''"
                   >
                     <div>
                       <p class="font-medium text-slate-800">{{ charge.name }}</p>
                       <p class="text-xs text-slate-500 mt-0.5">{{ charge.legalNote }}</p>
+                      <p v-if="charge.percentage !== null" class="text-xs text-slate-400 mt-1">{{ charge.percentage }}% del monto desembolsado</p>
                     </div>
                     <div class="ml-4 shrink-0 text-right">
                       <p class="font-semibold text-orange-800">${{ Number(charge.amount).toFixed(2) }}</p>
-                      <p v-if="charge.percentage !== null" class="text-xs text-slate-400">{{ charge.percentage }}% del monto</p>
                     </div>
                   </div>
                 </div>
-                <div class="mt-3 flex justify-between border-t border-orange-200 pt-2 text-sm">
-                  <span class="text-slate-600">Monto neto que recibirá</span>
-                  <span class="font-bold text-slate-900">${{ netDisbursement?.toFixed(2) }}</span>
+                <div class="mt-4 flex justify-between border-t border-orange-200 pt-3 text-sm">
+                  <span class="font-semibold text-slate-700">Monto neto que recibirá</span>
+                  <span class="font-bold text-slate-900 text-lg">${{ netDisbursement?.toFixed(2) }}</span>
                 </div>
                 <p class="mt-2 text-xs text-orange-700">
-                  Estos valores se deducen del monto desembolsado. El crédito se registra por el valor bruto solicitado.
+                  Estos valores se deducen automáticamente del monto desembolsado. El crédito se registra por el valor bruto solicitado.
                 </p>
               </div>
 
@@ -552,47 +553,52 @@
 
             <!-- Cargos al desembolso en resumen -->
             <section v-if="disbursementChargesEnriched.length" class="rounded-lg border border-orange-200 bg-orange-50 p-4">
-              <div class="mb-3 flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-wider text-orange-500">Cargos al desembolso</p>
+              <div class="mb-4 flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wider text-orange-600">
+                  <i class="pi pi-wallet mr-2"></i>Cargos al desembolso
+                </p>
                 <span class="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
-                  Independientes del interés de la deuda
+                  Se deducen del monto
                 </span>
               </div>
-              <div class="flex flex-col gap-2 text-sm">
+              <div class="flex flex-col gap-3 text-sm">
                 <div
                   v-for="charge in disbursementChargesEnriched"
                   :key="charge.name"
                   class="flex items-start justify-between"
+                  :class="charge.chargeType === 'solca' ? 'rounded-lg bg-white p-3' : ''"
                 >
                   <div>
                     <p class="font-medium text-slate-800">{{ charge.name }}</p>
                     <p class="text-xs text-slate-500 mt-0.5">{{ charge.legalNote }}</p>
+                    <p v-if="charge.percentage !== null" class="text-xs text-slate-400 mt-1">{{ charge.percentage }}% del monto</p>
                   </div>
                   <div class="ml-4 shrink-0 text-right">
                     <p class="font-semibold text-orange-800">${{ Number(charge.amount).toFixed(2) }}</p>
-                    <p v-if="charge.percentage !== null" class="text-xs text-slate-400">{{ charge.percentage }}% del monto</p>
                   </div>
                 </div>
-                <div class="mt-1 flex justify-between border-t border-orange-200 pt-2">
-                  <span class="text-slate-600">Monto neto a recibir</span>
-                  <span class="font-bold text-slate-900">{{ netDisbursement != null ? `$${Number(netDisbursement).toFixed(2)}` : '—' }}</span>
+                <div class="mt-2 flex justify-between border-t border-orange-200 pt-3 font-semibold">
+                  <span class="text-slate-700">Monto neto a recibir</span>
+                  <span class="text-slate-900 text-lg">{{ netDisbursement != null ? `$${Number(netDisbursement).toFixed(2)}` : '—' }}</span>
                 </div>
               </div>
             </section>
 
             <!-- Seguros en resumen -->
-            <section v-if="perInstallmentChargesEnriched.length" class="rounded-lg border border-slate-200 p-4">
-              <div class="mb-3 flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Seguros incluidos en cada cuota</p>
+            <section v-if="perInstallmentChargesEnriched.length" class="rounded-lg border border-slate-200 bg-white p-4">
+              <div class="mb-4 flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <i class="pi pi-shield mr-2"></i>Seguros incluidos en cada cuota
+                </p>
                 <span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                  Independientes del interés de la deuda
+                  Independientes del interés
                 </span>
               </div>
-              <div class="flex flex-col gap-2 text-sm">
+              <div class="flex flex-col gap-4 text-sm">
                 <div v-for="charge in perInstallmentChargesEnriched" :key="charge.name" class="flex items-start justify-between">
-                  <div>
+                  <div class="flex-1">
                     <p class="font-medium text-slate-800">{{ charge.name }}</p>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ charge.value }}% mensual sobre saldo</p>
+                    <p class="text-xs text-slate-600 mt-1">{{ charge.value }}% mensual sobre saldo — {{ charge.legalNote }}</p>
                   </div>
                   <div class="ml-4 shrink-0 text-right">
                     <p v-if="charge.firstMonthAmount !== null" class="font-semibold text-slate-700">
@@ -602,8 +608,8 @@
                   </div>
                 </div>
               </div>
-              <p class="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-400">
-                El monto varía cada mes porque se calcula sobre el saldo pendiente.
+              <p class="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                <i class="pi pi-info-circle mr-1"></i>El monto varía cada mes porque se calcula sobre el saldo pendiente. Ya incluidos en la cuota total.
               </p>
             </section>
 

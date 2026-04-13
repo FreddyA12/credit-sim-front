@@ -36,25 +36,248 @@
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="detailVisible" header="Detalle de Solicitud" modal class="w-full max-w-2xl">
-      <div v-if="selected" class="grid grid-cols-2 gap-3 text-sm">
-        <div><span class="font-medium">Solicitante:</span> {{ selected.clientName }}</div>
-        <div><span class="font-medium">Cédula:</span> {{ selected.idNumber }}</div>
-        <div><span class="font-medium">Email:</span> {{ selected.clientEmail || '—' }}</div>
-        <div><span class="font-medium">Teléfono:</span> {{ selected.clientPhone || '—' }}</div>
-        <div><span class="font-medium">Tipo:</span> {{ selected.creditType?.name }}</div>
-        <div><span class="font-medium">Monto:</span> ${{ formatNumber(selected.amount) }}</div>
-        <div><span class="font-medium">Plazo:</span> {{ selected.termMonths }} meses</div>
-        <div><span class="font-medium">Tasa aplicada:</span> {{ selected.appliedRate }}%</div>
-        <div><span class="font-medium">Amortización:</span> {{ selected.amortizationSystem }}</div>
-        <div><span class="font-medium">Ingresos:</span> ${{ selected.monthlyIncome || '—' }}</div>
-        <div class="col-span-2">
-          <span class="font-medium">Documentos:</span>
-          <ul class="mt-1">
-            <li v-for="doc in selected.documents" :key="doc.id">
-              <a :href="doc.fileUrl" target="_blank" class="text-blue-600 hover:underline">{{ doc.documentType }}</a>
-            </li>
-          </ul>
+    <Dialog v-model:visible="detailVisible" header="Detalle de Solicitud de Crédito" modal class="w-full max-w-6xl" @hide="resetDetail">
+      <div v-if="selected" class="space-y-4">
+        <!-- Encabezado con estado -->
+        <div class="grid grid-cols-3 gap-4 pb-4 border-b">
+          <div>
+            <span class="text-sm text-gray-600">Solicitante</span>
+            <p class="font-bold text-lg">{{ selected.clientName }}</p>
+            <p class="text-sm text-gray-600">{{ selected.idNumber }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">Monto solicitado</span>
+            <p class="font-bold text-lg">${{ formatNumber(selected.amount) }}</p>
+            <p class="text-sm text-gray-600">{{ selected.termMonths }} meses</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">Estado actual</span>
+            <Tag :value="statusLabel(selected.status)" :severity="statusSeverity(selected.status)" class="mt-1" />
+            <p class="text-xs text-gray-500 mt-2">{{ new Date(selected.createdAt).toLocaleDateString('es-EC') }}</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <TabView>
+          <!-- TAB 1: Información General -->
+          <TabPanel header="Información General" value="0">
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Nombre</label>
+                  <p class="mt-1 text-gray-900">{{ selected.clientName }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Cédula/RUC</label>
+                  <p class="mt-1 text-gray-900">{{ selected.idNumber }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Email</label>
+                  <p class="mt-1 text-gray-900">{{ selected.clientEmail || 'No proporcionado' }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Teléfono</label>
+                  <p class="mt-1 text-gray-900">{{ selected.clientPhone || 'No proporcionado' }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Patrimonio neto</label>
+                  <p class="mt-1 text-gray-900">${{ formatNumber(selected.netWorth || 0) }}</p>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Tipo de crédito</label>
+                  <p class="mt-1 text-gray-900">{{ selected.creditType?.name }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Segmento BCE</label>
+                  <p class="mt-1 text-gray-900">{{ selected.creditType?.bceSegment || '—' }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Tasa aplicada</label>
+                  <p class="mt-1 text-gray-900">{{ formatNumber(selected.appliedRate) }}% anual</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Sistema de amortización</label>
+                  <p class="mt-1 text-gray-900">{{ selected.amortizationSystem === 'french' ? 'Francés (cuota fija)' : 'Alemán (capital fijo)' }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Tipo de solicitante</label>
+                  <p class="mt-1 text-gray-900">{{ selected.applicantType || 'Natural' }}</p>
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+
+          <!-- TAB 2: Capacidad de Pago -->
+          <TabPanel header="Capacidad de Pago" value="1">
+            <div class="grid grid-cols-3 gap-6 mb-6">
+              <div class="bg-blue-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Ingresos mensuales</p>
+                <p class="text-2xl font-bold text-blue-900">${{ formatNumber(selected.monthlyIncome || 0) }}</p>
+              </div>
+              <div class="bg-yellow-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Gastos mensuales</p>
+                <p class="text-2xl font-bold text-yellow-900">${{ formatNumber(selected.monthlyExpenses || 0) }}</p>
+              </div>
+              <div class="bg-orange-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Otras deudas</p>
+                <p class="text-2xl font-bold text-orange-900">${{ formatNumber(selected.otherDebts || 0) }}</p>
+              </div>
+            </div>
+
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+              <p class="text-sm font-medium text-gray-700">Capacidad máxima de pago (40% ingresos netos)</p>
+              <p class="text-3xl font-bold text-green-900 mt-2">${{ formatNumber(selected.maxPaymentCalc || 0) }}</p>
+              <p class="text-xs text-gray-600 mt-2">
+                Base: ({{ formatNumber(selected.monthlyIncome || 0) }} - {{ formatNumber(selected.monthlyExpenses || 0) }} - {{ formatNumber(selected.otherDebts || 0) }}) × 40%
+              </p>
+            </div>
+          </TabPanel>
+
+          <!-- TAB 3: Amortización -->
+          <TabPanel header="Tabla de Amortización" value="2">
+            <div v-if="selected.scheduleJson && selected.scheduleJson.length > 0" class="overflow-x-auto">
+              <DataTable :value="selected.scheduleJson" :rows="10" paginator stripedRows size="small">
+                <Column field="number" header="Cuota" :sortable="true" />
+                <Column field="paymentDate" header="Fecha">
+                  <template #body="{ data }">
+                    {{ new Date(data.paymentDate).toLocaleDateString('es-EC') }}
+                  </template>
+                </Column>
+                <Column field="principal" header="Capital">
+                  <template #body="{ data }">
+                    ${{ formatNumber(data.principal) }}
+                  </template>
+                </Column>
+                <Column field="interest" header="Interés">
+                  <template #body="{ data }">
+                    ${{ formatNumber(data.interest) }}
+                  </template>
+                </Column>
+                <Column field="totalPayment" header="Cuota Total">
+                  <template #body="{ data }">
+                    <strong>${{ formatNumber(data.totalPayment) }}</strong>
+                  </template>
+                </Column>
+                <Column field="balance" header="Saldo">
+                  <template #body="{ data }">
+                    ${{ formatNumber(data.balance) }}
+                  </template>
+                </Column>
+              </DataTable>
+            </div>
+            <div v-else class="text-center py-8 text-gray-500">
+              No hay información de amortización disponible
+            </div>
+          </TabPanel>
+
+          <!-- TAB 4: Documentos -->
+          <TabPanel header="Documentos" value="3">
+            <div v-if="selected.documents && selected.documents.length > 0" class="grid grid-cols-1 gap-3">
+              <div v-for="doc in selected.documents" :key="doc.id" class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div class="flex items-center gap-3">
+                  <i class="pi pi-file text-2xl text-blue-600"></i>
+                  <div>
+                    <p class="font-medium">{{ doc.documentType }}</p>
+                    <p class="text-xs text-gray-500">{{ doc.originalName }} • {{ formatFileSize(doc.sizeBytes) }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <Button icon="pi pi-download" severity="secondary" text rounded @click="downloadDocument(doc)" title="Descargar" />
+                  <Button icon="pi pi-eye" severity="info" text rounded @click="openDocumentPreview(doc)" title="Ver" />
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-8 text-gray-500">
+              No hay documentos adjuntos
+            </div>
+          </TabPanel>
+
+          <!-- TAB 5: Biometría -->
+          <TabPanel header="Biometría y Validación" value="4">
+            <div class="space-y-4">
+              <div class="p-4 rounded-lg" :class="selected.biometricsValidated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium" :class="selected.biometricsValidated ? 'text-green-900' : 'text-yellow-900'">
+                      Estado de validación biométrica
+                    </p>
+                    <p class="text-sm mt-1" :class="selected.biometricsValidated ? 'text-green-700' : 'text-yellow-700'">
+                      {{ selected.biometricsValidated ? 'Verificado' : 'Pendiente de verificación' }}
+                    </p>
+                  </div>
+                  <Tag :value="selected.biometricsValidated ? 'Verificado' : 'Pendiente'" :severity="selected.biometricsValidated ? 'success' : 'warn'" />
+                </div>
+              </div>
+              <div v-if="selected.biometricsScore">
+                <p class="text-sm font-medium text-gray-700">Puntuación biométrica</p>
+                <ProgressBar :value="parseFloat(selected.biometricsScore) * 100" class="mt-2" />
+                <p class="text-xs text-gray-600 mt-1">{{ formatNumber(parseFloat(selected.biometricsScore)) }}</p>
+              </div>
+            </div>
+          </TabPanel>
+
+          <!-- TAB 6: Decisión -->
+          <TabPanel header="Decisión y Notas" value="5">
+            <div class="space-y-4">
+              <div>
+                <label class="text-sm font-medium text-gray-700">Decisión</label>
+                <Select 
+                  v-model="decisionForm.status" 
+                  :options="decisionStatusOptions" 
+                  optionLabel="label" 
+                  optionValue="value"
+                  class="w-full mt-2"
+                />
+              </div>
+
+              <div v-if="decisionForm.status === 'rejected'" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <i class="pi pi-exclamation-triangle mr-2"></i>
+                Se notificará al solicitante sobre el rechazo con los motivos indicados.
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-700">Notas de la revisión</label>
+                <Textarea 
+                  v-model="decisionForm.notes" 
+                  rows="5"
+                  placeholder="Ingrese los detalles de su decisión, observaciones del análisis, etc."
+                  class="w-full mt-2"
+                />
+              </div>
+
+              <div v-if="selected.notes" class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm font-medium text-blue-900">Notas anteriores</p>
+                <p class="text-sm text-blue-800 mt-1">{{ selected.notes }}</p>
+              </div>
+
+              <div class="flex gap-2 justify-end pt-4">
+                <Button label="Cancelar" severity="secondary" @click="detailVisible = false" />
+                <Button 
+                  label="Guardar decisión" 
+                  @click="saveDecision" 
+                  :loading="savingDecision"
+                  :disabled="!decisionForm.status"
+                />
+              </div>
+            </div>
+          </TabPanel>
+        </TabView>
+      </div>
+    </Dialog>
+
+    <!-- Dialog para preview de documentos -->
+    <Dialog v-model:visible="docPreviewVisible" header="Vista previa de documento" modal class="w-full max-w-4xl">
+      <div v-if="previewDoc" class="flex flex-col items-center justify-center">
+        <p class="mb-4 text-gray-600">{{ previewDoc.originalName }}</p>
+        <iframe v-if="isPdfFile(previewDoc.mimeType)" :src="previewDoc.fileUrl" class="w-full h-96" />
+        <img v-else-if="isImageFile(previewDoc.mimeType)" :src="previewDoc.fileUrl" class="max-h-96 max-w-full" />
+        <div v-else class="text-center py-8 text-gray-500">
+          <i class="pi pi-file text-6xl mb-4"></i>
+          <p>No se puede previsualizarse este tipo de archivo</p>
+          <Button label="Descargar" icon="pi pi-download" @click="downloadDocument(previewDoc)" class="mt-4" />
         </div>
       </div>
     </Dialog>
@@ -70,6 +293,10 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import Textarea from 'primevue/textarea';
+import ProgressBar from 'primevue/progressbar';
 import { formatNumber } from '../../utils/number-utils';
 import api from '../../services/api';
 
@@ -77,14 +304,24 @@ const toast = useToast();
 const applications = ref<any[]>([]);
 const loading = ref(false);
 const detailVisible = ref(false);
+const docPreviewVisible = ref(false);
 const selected = ref<any>(null);
+const previewDoc = ref<any>(null);
+const savingDecision = ref(false);
+
+const decisionForm = ref({ status: '', notes: '' });
 
 const statusOptions = [
   { label: 'Pendiente', value: 'pending' },
-  { label: 'En revisión', value: 'in_review' },
+  { label: 'En revisión', value: 'under_review' },
   { label: 'Aprobado', value: 'approved' },
   { label: 'Rechazado', value: 'rejected' },
-  { label: 'Desembolsado', value: 'disbursed' },
+];
+
+const decisionStatusOptions = [
+  { label: 'En revisión', value: 'under_review' },
+  { label: 'Aprobado', value: 'approved' },
+  { label: 'Rechazado', value: 'rejected' },
 ];
 
 function statusLabel(s: string) {
@@ -92,20 +329,96 @@ function statusLabel(s: string) {
 }
 
 function statusSeverity(s: string) {
-  const map: Record<string, string> = { pending: 'warn', in_review: 'info', approved: 'success', rejected: 'danger', disbursed: 'success' };
+  const map: Record<string, string> = { pending: 'warn', under_review: 'info', approved: 'success', rejected: 'danger' };
   return map[s] ?? 'secondary';
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+function isPdfFile(mimeType: string): boolean {
+  return mimeType.includes('pdf');
+}
+
+function isImageFile(mimeType: string): boolean {
+  return mimeType.startsWith('image/');
+}
+
+function downloadDocument(doc: any) {
+  const link = document.createElement('a');
+  link.href = doc.fileUrl;
+  link.download = doc.originalName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function openDocumentPreview(doc: any) {
+  previewDoc.value = doc;
+  docPreviewVisible.value = true;
+}
+
+function resetDetail() {
+  selected.value = null;
+  decisionForm.value = { status: '', notes: '' };
+}
+
+async function saveDecision() {
+  if (!selected.value || !decisionForm.value.status) {
+    toast.add({ severity: 'warn', summary: 'Seleccione una decisión', life: 2000 });
+    return;
+  }
+
+  savingDecision.value = true;
+  try {
+    await api.put(`/credit-applications/${selected.value.id}/status`, {
+      status: decisionForm.value.status,
+      notes: decisionForm.value.notes,
+    });
+
+    // Actualizar en la lista
+    const idx = applications.value.findIndex((a) => a.id === selected.value.id);
+    if (idx !== -1) {
+      applications.value[idx].status = decisionForm.value.status;
+      applications.value[idx].notes = decisionForm.value.notes;
+    }
+
+    toast.add({ severity: 'success', summary: 'Decisión guardada', life: 2000 });
+    detailVisible.value = false;
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error al guardar', detail: error.response?.data?.message, life: 3000 });
+  } finally {
+    savingDecision.value = false;
+  }
 }
 
 onMounted(async () => {
   loading.value = true;
-  const { data } = await api.get('/credit-applications');
-  applications.value = data;
-  loading.value = false;
+  try {
+    const { data } = await api.get('/credit-applications');
+    applications.value = data;
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error al cargar solicitudes', life: 3000 });
+  } finally {
+    loading.value = false;
+  }
 });
 
-function openDetail(data: any) {
-  selected.value = data;
-  detailVisible.value = true;
+async function openDetail(data: any) {
+  try {
+    // Cargar detalles completos incluyendo documentos
+    const { data: fullDetails } = await api.get(`/credit-applications/${data.id}`);
+    selected.value = fullDetails;
+    decisionForm.value = { status: fullDetails.status || '', notes: fullDetails.notes || '' };
+    detailVisible.value = true;
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error al cargar detalles', detail: error.response?.data?.message, life: 3000 });
+  }
 }
 
 async function updateStatus(app: any) {
