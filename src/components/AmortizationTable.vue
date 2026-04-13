@@ -2,22 +2,22 @@
   <DataTable :value="tableData" stripedRows size="small" scrollable>
     <Column field="number" header="#" />
     <Column header="Cuota total">
-      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${data.totalPayment?.toFixed(2)}` }}</template>
+      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${formatNumber(data.totalPayment)}` }}</template>
     </Column>
     <Column header="Capital">
-      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${data.principal?.toFixed(2)}` }}</template>
+      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${formatNumber(data.principal)}` }}</template>
     </Column>
     <Column header="Interés">
-      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${data.interest?.toFixed(2)}` }}</template>
+      <template #body="{ data }">{{ data.isRow0 ? '—' : `$${formatNumber(data.interest)}` }}</template>
     </Column>
     <Column v-for="chargeName in chargeNames" :key="chargeName" :header="chargeName">
       <template #body="{ data }">
         <template v-if="data.isRow0">—</template>
-        <template v-else>${{ getChargeAmount(data, chargeName).toFixed(2) }}</template>
+        <template v-else>${{ formatNumber(getChargeAmount(data, chargeName)) }}</template>
       </template>
     </Column>
     <Column header="Saldo">
-      <template #body="{ data }">${{ data.balance?.toFixed(2) }}</template>
+      <template #body="{ data }">${{ formatNumber(data.balance) }}</template>
     </Column>
   </DataTable>
 </template>
@@ -26,6 +26,7 @@
 import { computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { formatNumber, toNumber } from '../utils/number-utils';
 
 const props = defineProps<{ schedule: any[]; loanAmount?: number }>();
 
@@ -41,7 +42,7 @@ const chargeNames = computed(() => {
 
 function getChargeAmount(row: any, name: string): number {
   const charge = (row.additionalCharges ?? []).find((c: any) => c.name === name);
-  return charge?.amount ?? 0;
+  return toNumber(charge?.amount);
 }
 
 const tableData = computed(() => {

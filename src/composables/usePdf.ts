@@ -1,8 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toNumber, formatNumber } from '../utils/number-utils';
 
-function formatMoney(val: number | undefined) {
-  return `$${(val ?? 0).toFixed(2)}`;
+function formatMoney(val: number | undefined | string | null) {
+  return `$${formatNumber(toNumber(val))}`;
 }
 
 function formatTermMonths(months: number): string {

@@ -13,7 +13,7 @@
         <template #body="{ data }">{{ data.creditType?.name }}</template>
       </Column>
       <Column header="Monto">
-        <template #body="{ data }">${{ Number(data.amount).toFixed(2) }}</template>
+        <template #body="{ data }">${{ formatNumber(data.amount) }}</template>
       </Column>
       <Column field="termMonths" header="Plazo (meses)" />
       <Column header="Estado">
@@ -43,7 +43,7 @@
         <div><span class="font-medium">Email:</span> {{ selected.clientEmail || '—' }}</div>
         <div><span class="font-medium">Teléfono:</span> {{ selected.clientPhone || '—' }}</div>
         <div><span class="font-medium">Tipo:</span> {{ selected.creditType?.name }}</div>
-        <div><span class="font-medium">Monto:</span> ${{ Number(selected.amount).toFixed(2) }}</div>
+        <div><span class="font-medium">Monto:</span> ${{ formatNumber(selected.amount) }}</div>
         <div><span class="font-medium">Plazo:</span> {{ selected.termMonths }} meses</div>
         <div><span class="font-medium">Tasa aplicada:</span> {{ selected.appliedRate }}%</div>
         <div><span class="font-medium">Amortización:</span> {{ selected.amortizationSystem }}</div>
@@ -70,6 +70,7 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { formatNumber } from '../../utils/number-utils';
 import api from '../../services/api';
 
 const toast = useToast();

@@ -130,8 +130,9 @@ const saving = ref(false);
 const editingId = ref<string | null>(null);
 
 const MORTGAGE_SEGMENTS = [
-  'mortgage', 'social_housing', 'real_estate',
-  'hipotecario', 'vivienda_interes_social', 'vivienda_interes_publico', 'inmobiliario',
+  'vivienda_interes_social',
+  'vivienda_interes_publico',
+  'inmobiliario',
 ];
 
 const isMortgageSegment = computed(() => MORTGAGE_SEGMENTS.includes(creditTypeBceSegment.value));

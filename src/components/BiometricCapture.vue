@@ -11,7 +11,7 @@
       <Button label="Capturar biométrico" icon="pi pi-check" @click="capture" :loading="capturing" v-if="streaming" />
     </div>
     <Message v-if="verified" severity="success" :closable="false">
-      Verificación biométrica exitosa (score: {{ score?.toFixed(3) }})
+      Verificación biométrica exitosa (score: {{ formatNumber(score, 3) }})
     </Message>
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
   </div>
@@ -22,6 +22,7 @@ import { ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { useBiometrics } from '../composables/useBiometrics';
+import { formatNumber } from '../utils/number-utils';
 
 const emit = defineEmits<{ (e: 'verified', descriptor: Float32Array): void }>();
 const videoRef = ref<HTMLVideoElement | null>(null);

@@ -89,7 +89,7 @@
     >
       <div class="text-sm text-gray-700 flex flex-wrap gap-4">
         <span><strong>{{ selectedProduct?.name }}</strong></span>
-        <span>Monto: <strong>${{ form.amount?.toFixed(2) }}</strong></span>
+        <span>Monto: <strong>${{ formatNumber(form.amount) }}</strong></span>
         <span>Plazo: <strong>{{ form.termDays }} días</strong></span>
         <span>Tasa: <strong>{{ resolvedAnnualRate != null ? resolvedAnnualRate + '%' : '—' }}</strong></span>
         <span>Pago de intereses: <strong>{{ paymentFrequencyLabel(selectedProduct?.paymentFrequency) }}</strong></span>
@@ -117,14 +117,14 @@
         </template>
         <template #content>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div><span class="font-medium">Monto invertido:</span> ${{ result.summary.amount?.toFixed(2) }}</div>
+            <div><span class="font-medium">Monto invertido:</span> ${{ formatNumber(result.summary.amount) }}</div>
             <div><span class="font-medium">Tasa anual:</span> {{ result.summary.annualRate }}%</div>
             <div><span class="font-medium">Plazo:</span> {{ result.summary.termDays }} días</div>
             <div><span class="font-medium">Pago de intereses:</span> {{ paymentFrequencyLabel(selectedProduct?.paymentFrequency) }}</div>
-            <div><span class="font-medium">Interés bruto:</span> ${{ result.summary.grossInterest?.toFixed(2) }}</div>
-            <div><span class="font-medium">Retención IR (2%):</span> ${{ result.summary.irWithholding?.toFixed(2) }}</div>
-            <div><span class="font-medium">Interés neto:</span> ${{ result.summary.netInterest?.toFixed(2) }}</div>
-            <div><span class="font-medium">Al vencimiento:</span> ${{ result.summary.amountAtMaturity?.toFixed(2) }}</div>
+            <div><span class="font-medium">Interés bruto:</span> ${{ formatNumber(result.summary.grossInterest) }}</div>
+            <div><span class="font-medium">Retención IR (2%):</span> ${{ formatNumber(result.summary.irWithholding) }}</div>
+            <div><span class="font-medium">Interés neto:</span> ${{ formatNumber(result.summary.netInterest) }}</div>
+            <div><span class="font-medium">Al vencimiento:</span> ${{ formatNumber(result.summary.amountAtMaturity) }}</div>
           </div>
         </template>
       </Card>
@@ -140,23 +140,23 @@
             <Column field="accumulatedDays" header="Días acumulados" :sortable="true"></Column>
             <Column field="grossInterest" header="Interés bruto">
               <template #body="{ data }">
-                ${{ data.grossInterest?.toFixed(2) }}
+                ${{ formatNumber(data.grossInterest) }}
               </template>
             </Column>
             <Column field="irWithholding" header="Retención IR (2%)">
               <template #body="{ data }">
-                ${{ data.irWithholding?.toFixed(2) }}
+                ${{ formatNumber(data.irWithholding) }}
               </template>
             </Column>
             <Column field="netInterest" header="Interés neto">
               <template #body="{ data }">
-                ${{ data.netInterest?.toFixed(2) }}
+                ${{ formatNumber(data.netInterest) }}
               </template>
             </Column>
             <Column field="totalAtMaturity" header="Total al vencimiento">
               <template #body="{ data }">
                 <span v-if="data.totalAtMaturity" class="font-bold text-gray-900">
-                  ${{ data.totalAtMaturity?.toFixed(2) }}
+                  ${{ formatNumber(data.totalAtMaturity) }}
                 </span>
                 <span v-else class="text-gray-400">—</span>
               </template>
@@ -187,6 +187,7 @@ import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
 import { usePdf } from '../../composables/usePdf';
 import { formatCurrency } from '../../utils/financial-calculations';
 import { paymentFrequencyLabel } from '../../utils/investment-payment-frequency';
+import { formatNumber, ensureNumbers } from '../../utils/number-utils';
 import api from '../../services/api';
 
 const route = useRoute();
