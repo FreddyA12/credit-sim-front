@@ -1,12 +1,11 @@
-export const SEGMENTS_WITH_INSURANCE = [
-  'hipotecario',
+export const SEGMENTS_WITH_FIRE_INSURANCE = [
   'vivienda_interes_social',
   'vivienda_interes_publico',
   'inmobiliario',
 ];
 
-export function requiresInsurance(segment: string): boolean {
-  return SEGMENTS_WITH_INSURANCE.includes(segment);
+export function requiresFireInsurance(segment: string): boolean {
+  return SEGMENTS_WITH_FIRE_INSURANCE.includes(segment);
 }
 
 export const COSEDE_LIMITS: Record<string, number> = {

@@ -1,35 +1,46 @@
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Simulador de Crédito</h1>
-    <div v-if="!formCollapsed">
-      <Card>
-        <template #title>Parámetros del crédito</template>
-        <template #content>
-          <form @submit.prevent="simulate" class="flex flex-col gap-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="flex w-full flex-col items-center">
+    <h1 class="mb-6 w-full max-w-lg text-center text-2xl font-bold text-gray-800">Simulador de Crédito</h1>
+    <div v-if="!formCollapsed" class="flex w-full justify-center px-0 sm:px-2">
+      <div class="w-full max-w-lg">
+        <Card class="w-full shadow-sm">
+          <template #title>Parámetros del crédito</template>
+          <template #content>
+            <form @submit.prevent="simulate" class="flex flex-col gap-4">
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Tipo de crédito</label>
                 <Select v-model="form.creditTypeId" :options="creditTypes" optionLabel="name" optionValue="id" placeholder="Seleccione..." @change="onTypeChange" />
-                <span v-if="selectedType" class="text-xs text-gray-500">
-                  Tasa anual: <strong>{{ selectedType.annualRate }}%</strong> | Máx. JPRF: <strong>{{ selectedType.maxJprfRate }}%</strong>
-                </span>
               </div>
+
+              <div v-if="selectedType" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                <span>Tasa anual <strong class="text-gray-800">{{ selectedType.annualRate }}%</strong></span>
+                <span class="text-slate-300 hidden sm:inline">|</span>
+                <span>Máx. JPRF <strong class="text-gray-800">{{ selectedType.maxJprfRate }}%</strong></span>
+                <span class="text-slate-300 hidden sm:inline">|</span>
+                <span>Monto <strong class="text-gray-800">${{ selectedType.minAmount }} – ${{ selectedType.maxAmount }}</strong></span>
+                <span class="text-slate-300 hidden sm:inline">|</span>
+                <span>Plazo <strong class="text-gray-800">{{ selectedType.minTermMonths }}–{{ selectedType.maxTermMonths }}</strong> meses</span>
+              </div>
+
               <div v-if="selectedType" class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Sistema de amortización</label>
                 <Select v-model="form.amortizationSystem" :options="[{label:'Francés (cuota fija)',value:'french'},{label:'Alemán (cuotas decrecientes)',value:'german'}]" optionLabel="label" optionValue="value" />
                 <span class="text-xs text-gray-400">Derecho del cliente según Art. 184 del COMF</span>
               </div>
+
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Monto (USD)</label>
                 <InputNumber v-model="form.amount" :min="selectedType?.minAmount || 0" :max="selectedType?.maxAmount || 999999" mode="currency" currency="USD" locale="es-EC" fluid />
                 <span v-if="selectedType" class="text-xs text-gray-400">Mín: ${{ selectedType.minAmount }} — Máx: ${{ selectedType.maxAmount }}</span>
               </div>
+
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Plazo (meses)</label>
-                <InputNumber v-model="form.termMonths" :min="selectedType?.minTermMonths || 1" :max="selectedType?.maxTermMonths || 360" fluid />
-                <span v-if="selectedType" class="text-xs text-gray-400">Mín: {{ selectedType.minTermMonths }} meses — Máx: {{ selectedType.maxTermMonths }} meses</span>
+                <InputNumber v-model="form.termMonths" :min="selectedType?.minTermMonths || 1" :max="selectedType?.maxTermMonths || 360" :useGrouping="false" :minFractionDigits="0" :maxFractionDigits="0" fluid />
+                <span v-if="selectedType" class="text-xs text-gray-400">Cualquier número entero entre {{ selectedType.minTermMonths }} y {{ selectedType.maxTermMonths }} meses.</span>
                 <span v-if="form.termMonths" class="text-xs text-blue-500 font-medium">{{ formatTermMonths(form.termMonths) }}</span>
               </div>
+
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Ingresos netos mensuales (USD)</label>
                 <InputNumber v-model="form.netIncome" :min="0" mode="currency" currency="USD" locale="es-EC" fluid />
@@ -37,30 +48,32 @@
                   Capacidad de pago: <strong class="text-blue-600">${{ formatNumber(maxPaymentCapacity) }}/mes</strong>
                 </span>
               </div>
-            </div>
-            <div class="flex justify-end">
+
               <Button type="submit" label="Simular" icon="pi pi-calculator" :loading="loading" />
-            </div>
-          </form>
-        </template>
-      </Card>
+            </form>
+          </template>
+        </Card>
+      </div>
     </div>
 
-    <div v-if="result" class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mb-4">
+    <div
+      v-if="result"
+      class="mb-4 flex w-full max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
+    >
       <div class="text-sm text-gray-700 flex flex-wrap gap-4">
         <span><strong>{{ selectedType?.name }}</strong></span>
         <span>Monto: <strong>${{ formatNumber(form.amount) }}</strong></span>
         <span>Plazo: <strong>{{ formatTermMonths(form.termMonths) }}</strong></span>
         <span>Sistema: <strong>{{ form.amortizationSystem === 'french' ? 'Francés' : 'Alemán' }}</strong></span>
       </div>
-      <div class="flex gap-2 ml-4">
+      <div class="flex flex-wrap gap-2 sm:ml-4">
         <Button label="Modificar" icon="pi pi-pencil" severity="secondary" size="small" @click="backToEdit" />
         <Button label="Descargar PDF" icon="pi pi-download" severity="info" size="small" @click="downloadPdf" />
         <Button label="Solicitar" icon="pi pi-file-edit" severity="success" size="small" @click="goToApplication" />
       </div>
     </div>
 
-    <div v-if="result" class="flex flex-col gap-4">
+    <div v-if="result" class="flex w-full max-w-4xl flex-col gap-4">
       <CreditSummary :summary="result.summary" />
       <PaymentCapacityAlert :installment="result.summary.firstInstallment" :net-income="form.netIncome || 0" />
 

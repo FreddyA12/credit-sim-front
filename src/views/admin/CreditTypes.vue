@@ -45,15 +45,17 @@
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nombre</label>
           <InputText v-model="form.name" class="w-full" />
+          <span v-if="formErrors.name" class="text-xs text-red-600">{{ formErrors.name }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Segmento BCE</label>
           <Select v-model="form.bceSegment" :options="segmentOptions" optionLabel="label" optionValue="value" />
+          <span v-if="formErrors.bceSegment" class="text-xs text-red-600">{{ formErrors.bceSegment }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa anual (%)</label>
           <InputNumber v-model="form.annualRate" :min="0" :max="100" :minFractionDigits="2" fluid />
-          <span v-if="annualRateError" class="text-xs text-red-600">{{ annualRateError }}</span>
+          <span v-if="formErrors.annualRate" class="text-xs text-red-600">{{ formErrors.annualRate }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Tasa máx. JPRF (%)</label>
@@ -65,18 +67,22 @@
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto mínimo (USD)</label>
           <InputNumber v-model="form.minAmount" :min="0" fluid />
+          <span v-if="formErrors.minAmount" class="text-xs text-red-600">{{ formErrors.minAmount }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Monto máximo (USD)</label>
           <InputNumber v-model="form.maxAmount" :min="0" fluid />
+          <span v-if="formErrors.maxAmount" class="text-xs text-red-600">{{ formErrors.maxAmount }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo mínimo (meses)</label>
           <InputNumber v-model="form.minTermMonths" :min="1" fluid />
+          <span v-if="formErrors.minTermMonths" class="text-xs text-red-600">{{ formErrors.minTermMonths }}</span>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Plazo máximo (meses)</label>
           <InputNumber v-model="form.maxTermMonths" :min="1" fluid />
+          <span v-if="formErrors.maxTermMonths" class="text-xs text-red-600">{{ formErrors.maxTermMonths }}</span>
         </div>
         <div class="col-span-2 flex items-center gap-2">
           <Checkbox v-model="form.active" :binary="true" />
@@ -84,7 +90,7 @@
         </div>
         <div class="col-span-2 flex justify-end gap-2">
           <Button label="Cancelar" severity="secondary" @click="dialogVisible = false" />
-          <Button type="submit" label="Guardar" :loading="saving" />
+          <Button type="submit" label="Guardar" :loading="saving" :disabled="hasErrors" />
         </div>
       </form>
     </Dialog>
@@ -144,13 +150,40 @@ function segmentLabel(value: string) {
 const emptyForm = () => ({ name: '', bceSegment: 'consumo', annualRate: 0, maxJprfRate: 0, minAmount: 0, maxAmount: 0, minTermMonths: 1, maxTermMonths: 60, active: true });
 const form = ref(emptyForm());
 
-const annualRateError = computed(() => {
-  const max = jprfRates.value[form.value.bceSegment]?.maxRate;
-  if (max !== undefined && form.value.annualRate > max) {
-    return `Supera el máximo JPRF permitido (${max}%)`;
+const formErrors = computed(() => {
+  const errors: Record<string, string | null> = {};
+  const f = form.value;
+
+  errors.name = !f.name?.trim() ? 'El nombre es obligatorio' : null;
+  errors.bceSegment = !f.bceSegment ? 'Seleccione un segmento' : null;
+
+  const maxJprf = jprfRates.value[f.bceSegment]?.maxRate;
+  if (f.annualRate == null || f.annualRate <= 0) {
+    errors.annualRate = 'La tasa debe ser mayor a 0';
+  } else if (maxJprf !== undefined && f.annualRate > maxJprf) {
+    errors.annualRate = `Supera el máximo JPRF permitido (${maxJprf}%)`;
+  } else {
+    errors.annualRate = null;
   }
-  return null;
+
+  errors.minAmount = f.minAmount == null || f.minAmount <= 0 ? 'El monto mínimo debe ser mayor a 0' : null;
+  errors.maxAmount = f.maxAmount == null || f.maxAmount <= 0
+    ? 'El monto máximo debe ser mayor a 0'
+    : f.minAmount != null && f.maxAmount < f.minAmount
+      ? 'Debe ser mayor o igual al monto mínimo'
+      : null;
+
+  errors.minTermMonths = f.minTermMonths == null || f.minTermMonths < 1 ? 'El plazo mínimo debe ser al menos 1' : null;
+  errors.maxTermMonths = f.maxTermMonths == null || f.maxTermMonths < 1
+    ? 'El plazo máximo debe ser al menos 1'
+    : f.minTermMonths != null && f.maxTermMonths < f.minTermMonths
+      ? 'Debe ser mayor o igual al plazo mínimo'
+      : null;
+
+  return errors;
 });
+
+const hasErrors = computed(() => Object.values(formErrors.value).some((e) => e !== null));
 
 watch(() => form.value.bceSegment, (segment) => {
   if (segment && jprfRates.value[segment]) {
@@ -175,6 +208,11 @@ function openDialog(data?: any) {
 }
 
 async function save() {
+  if (hasErrors.value) {
+    const firstError = Object.values(formErrors.value).find((e) => e !== null);
+    toast.add({ severity: 'warn', summary: 'Formulario inválido', detail: firstError!, life: 4000 });
+    return;
+  }
   saving.value = true;
   try {
     if (editingId.value) {
@@ -184,8 +222,9 @@ async function save() {
     }
     toast.add({ severity: 'success', summary: 'Guardado', life: 3000 });
     dialogVisible.value = false;
-  } catch {
-    toast.add({ severity: 'error', summary: 'Error al guardar', life: 3000 });
+  } catch (e: any) {
+    const detail = e?.response?.data?.message || 'Error al guardar';
+    toast.add({ severity: 'error', summary: 'Error', detail, life: 5000 });
   } finally {
     saving.value = false;
   }
