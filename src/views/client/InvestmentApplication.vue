@@ -206,7 +206,7 @@
           <div v-else-if="activeStep === 3" class="flex flex-col gap-4">
             <h2 class="text-lg font-semibold">Verificación biométrica</h2>
             <p class="text-sm text-gray-600">Para completar su solicitud, necesitamos verificar su identidad mediante reconocimiento facial.</p>
-            <BiometricCapture @verified="onBiometricVerified" />
+            <BiometricCapture :expectedCedula="form.idNumber" @verified="onBiometricVerified" />
           </div>
 
           <div class="flex justify-between mt-6">
@@ -450,7 +450,7 @@ async function nextStep() {
   activeStep.value++;
 }
 
-function onBiometricVerified(_descriptor: Float32Array) {
+function onBiometricVerified() {
   biometricVerified.value = true;
   toast.add({ severity: 'success', summary: 'Identidad verificada', life: 3000 });
 }
