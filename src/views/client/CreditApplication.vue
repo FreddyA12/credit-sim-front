@@ -683,7 +683,7 @@
           <div v-else-if="activeStep === 4" class="flex flex-col gap-4">
             <h2 class="text-lg font-semibold text-slate-900">Verificación de identidad</h2>
             <p class="text-sm text-slate-500">Para completar su solicitud, necesitamos verificar su identidad mediante reconocimiento facial.</p>
-            <BiometricCapture @verified="onBiometricVerified" />
+            <BiometricCapture :expectedCedula="form.idNumber" @verified="onBiometricVerified" />
           </div>
 
           <!-- ── Navegación ────────────────────────────────────────────────── -->

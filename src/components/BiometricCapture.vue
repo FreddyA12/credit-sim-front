@@ -25,8 +25,47 @@
         <p>Sostenga su <strong>cédula de identidad</strong> frente a la cámara con el número claramente visible y presione <strong>"Leer cédula"</strong>.</p>
       </template>
     </div>
-    <Message v-if="verified" severity="success" :closable="false">
-      Verificación biométrica exitosa (score: {{ formatNumber(score, 3) }})
+
+    <!-- Vista de cámara -->
+    <div class="relative rounded-xl overflow-hidden bg-black aspect-video w-full">
+      <video ref="videoRef" autoplay muted playsinline class="w-full h-full object-cover" />
+      <div v-if="capturing" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 gap-2">
+        <i class="pi pi-spin pi-spinner text-white text-3xl" />
+        <span class="text-white text-sm">{{ subStep === 'face' ? 'Detectando rostro...' : 'Leyendo cédula...' }}</span>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex gap-2 justify-center">
+      <Button
+        v-if="!streaming"
+        label="Activar cámara"
+        icon="pi pi-camera"
+        severity="secondary"
+        @click="startCamera"
+      />
+      <template v-if="streaming">
+        <Button
+          v-if="subStep === 'face'"
+          label="Capturar rostro"
+          icon="pi pi-user"
+          :loading="capturing"
+          @click="doCaptureFace"
+        />
+        <Button
+          v-if="subStep === 'cedula'"
+          label="Leer cédula"
+          icon="pi pi-id-card"
+          :loading="capturing"
+          severity="warn"
+          @click="doCaptureCedula"
+        />
+      </template>
+    </div>
+
+    <!-- Éxito paso 1 -->
+    <Message v-if="faceVerified && subStep === 'cedula'" severity="success" :closable="false">
+      <i class="pi pi-check-circle mr-1" />Rostro verificado. Ahora muestre su cédula.
     </Message>
 
     <!-- Éxito final -->
@@ -44,7 +83,6 @@ import { ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { useBiometrics } from '../composables/useBiometrics';
-import { formatNumber } from '../utils/number-utils';
 
 const props = defineProps<{ expectedCedula: string }>();
 const emit = defineEmits<{ (e: 'verified'): void }>();

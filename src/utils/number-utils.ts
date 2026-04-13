@@ -27,6 +27,10 @@ export function formatNumber(value: any, decimals: number = 2): string {
  * @param keys Array de llaves a convertir
  * @returns Nuevo objeto con valores convertidos a número
  */
+export function formatCurrency(value: any): string {
+  return '$' + formatNumber(value, 2);
+}
+
 export function ensureNumbers<T extends Record<string, any>>(obj: T, keys: (keyof T)[]): T {
   const result = { ...obj };
   keys.forEach(key => {

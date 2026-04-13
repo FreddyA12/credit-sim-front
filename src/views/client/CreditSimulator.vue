@@ -165,7 +165,7 @@ import AmortizationTable from '../../components/AmortizationTable.vue';
 import LegalNote from '../../components/LegalNote.vue';
 import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
 import { usePdf } from '../../composables/usePdf';
-import { formatNumber, ensureNumbers } from '../../utils/number-utils';
+import { formatNumber, formatCurrency, ensureNumbers } from '../../utils/number-utils';
 
 const route = useRoute();
 const router = useRouter();
