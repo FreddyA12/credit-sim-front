@@ -255,7 +255,7 @@ import BiometricCapture from '../../components/BiometricCapture.vue';
 import LegalNote from '../../components/LegalNote.vue';
 import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
 import { useIdentityValidation } from '../../composables/useIdentityValidation';
-import { usePdf } from '../../composables/usePdf';
+import { useInvestmentPdf } from '../../composables/useInvestmentPdf';
 import { useInstitutionStore } from '../../stores/institution.store';
 import { formatCurrency } from '../../utils/financial-calculations';
 import { paymentFrequencyLabel } from '../../utils/investment-payment-frequency';
@@ -267,7 +267,7 @@ const toast = useToast();
 const { cedulaError, checkCedula } = useIdentityValidation();
 const institutionStore = useInstitutionStore();
 const { institution } = storeToRefs(institutionStore);
-const { generateInvestmentPdf } = usePdf();
+const { generateInvestmentPdf } = useInvestmentPdf();
 
 const products = ref<any[]>([]);
 const submitting = ref(false);
@@ -352,9 +352,17 @@ const summaryItems = computed(() => {
   ];
 });
 
-function downloadInvestmentPdf() {
+async function downloadInvestmentPdf() {
   if (!simResult.value?.summary) return;
-  generateInvestmentPdf(simResult.value.summary, institution.value);
+  await generateInvestmentPdf(
+    {
+      summary: simResult.value.summary,
+      projectionTable: simResult.value.projectionTable,
+      productName: selectedProduct.value?.name,
+      paymentLabel: paymentFrequencyLabel(selectedProduct.value?.paymentFrequency),
+    },
+    institution.value,
+  );
 }
 
 onMounted(async () => {

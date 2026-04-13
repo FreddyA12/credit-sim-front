@@ -184,7 +184,7 @@ import { useToast } from 'primevue/usetoast';
 import { useInstitutionStore } from '../../stores/institution.store';
 import LegalNote from '../../components/LegalNote.vue';
 import PdfDownloadButton from '../../components/PdfDownloadButton.vue';
-import { usePdf } from '../../composables/usePdf';
+import { useInvestmentPdf } from '../../composables/useInvestmentPdf';
 import { formatCurrency } from '../../utils/financial-calculations';
 import { paymentFrequencyLabel } from '../../utils/investment-payment-frequency';
 import api from '../../services/api';
@@ -195,7 +195,7 @@ const toast = useToast();
 const slug = computed(() => route.params.slug as string);
 const institutionStore = useInstitutionStore();
 const { institution } = storeToRefs(institutionStore);
-const { generateInvestmentPdf } = usePdf();
+const { generateInvestmentPdf } = useInvestmentPdf();
 
 const products = ref<any[]>([]);
 const loading = ref(false);
@@ -355,8 +355,16 @@ function goToApplication() {
   });
 }
 
-function downloadPdf() {
+async function downloadPdf() {
   if (!result.value) return;
-  generateInvestmentPdf(result.value.summary, institution.value);
+  await generateInvestmentPdf(
+    {
+      summary: result.value.summary,
+      projectionTable: result.value.projectionTable,
+      productName: selectedProduct.value?.name,
+      paymentLabel: paymentFrequencyLabel(selectedProduct.value?.paymentFrequency),
+    },
+    institution.value,
+  );
 }
 </script>

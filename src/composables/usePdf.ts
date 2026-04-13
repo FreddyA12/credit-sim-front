@@ -1,3 +1,6 @@
+/**
+ * PDF de simulación de crédito (amortización). La parte de inversiones está en useInvestmentPdf.ts.
+ */
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -137,54 +140,5 @@ export function usePdf() {
     doc.save(`simulacion-credito-${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
-  function generateInvestmentPdf(simulation: any, institution: any) {
-    const doc = new jsPDF();
-    const primary = institution?.primaryColor || '#1A3C6E';
-
-    doc.setFontSize(18);
-    doc.setTextColor(primary);
-    doc.text(institution?.name || 'Simulador Financiero', 14, 16);
-
-    doc.setFontSize(10);
-    doc.setTextColor('#555');
-    doc.text('Simulación de Inversión — Depósito a Plazo Fijo', 14, 23);
-    doc.text(`Fecha: ${new Date().toLocaleDateString('es-EC')}`, 14, 29);
-
-    if (institution?.slogan) {
-      doc.setFontSize(9);
-      doc.setTextColor('#888');
-      doc.text(institution.slogan, 14, 35);
-    }
-
-    doc.setFontSize(12);
-    doc.setTextColor('#222');
-    doc.text('Detalle de la inversión', 14, 44);
-
-    autoTable(doc, {
-      startY: 48,
-      head: [['Concepto', 'Valor']],
-      body: [
-        ['Monto invertido', formatMoney(simulation.amount)],
-        ['Tasa de interés anual', `${simulation.annualRate}%`],
-        ['Plazo', `${simulation.termDays} días`],
-        ['Interés bruto', formatMoney(simulation.grossInterest)],
-        ['Retención IR (2% — LRTI Art. 37)', formatMoney(simulation.irWithholding)],
-        ['Interés neto', formatMoney(simulation.netInterest)],
-        ['Monto al vencimiento', formatMoney(simulation.amountAtMaturity)],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: primary },
-      columnStyles: { 1: { halign: 'right' } },
-    });
-
-    const legalY = (doc as any).lastAutoTable.finalY + 8;
-    doc.setFontSize(7);
-    doc.setTextColor('#888');
-    doc.text('Retención del 2% sobre rendimientos financieros (LRTI Art. 37, Regl. Art. 131). Simulación informativa.', 14, legalY);
-    doc.text('COSEDE garantiza depósitos hasta el límite vigente (Art. 330 COMF).', 14, legalY + 4);
-
-    doc.save(`simulacion-inversion-${new Date().toISOString().split('T')[0]}.pdf`);
-  }
-
-  return { generateCreditPdf, generateInvestmentPdf };
+  return { generateCreditPdf };
 }
