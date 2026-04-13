@@ -748,7 +748,7 @@ const institutionStore = useInstitutionStore();
 const { creditTypes } = storeToRefs(creditStore);
 const { institution } = storeToRefs(institutionStore);
 const { cedulaError, rucError, checkCedula, checkRuc } = useIdentityValidation();
-const { generateCreditPdf } = usePdf();
+const { generateCreditPdf, generateCreditPdfBlob } = usePdf();
 
 const activeStep = ref(0);
 const submitted = ref(false);
@@ -1028,6 +1028,30 @@ async function submit() {
       maxPaymentCalc: paymentCapacity.value || undefined,
     };
     const { data: app } = await api.post(`/public/${slug.value}/credit-applications`, payload);
+    
+    // Generar y subir tabla de amortización
+    try {
+      const pdfBlob = await generateCreditPdfBlob(
+        result.summary,
+        result.rows,
+        institution.value,
+        disbursementChargesEnriched.value.map((c: any) => ({
+          name: c.name,
+          amount: c.amount,
+          legalNote: c.legalNote,
+        }))
+      );
+      const pdfFile = new File([pdfBlob], `tabla-amortizacion-${app.id}.pdf`, { type: 'application/pdf' });
+      const fd = new FormData();
+      fd.append('file', pdfFile);
+      fd.append('documentType', 'tabla_amortizacion');
+      await api.post(`/public/${slug.value}/credit-applications/${app.id}/documents`, fd);
+    } catch (pdfError) {
+      console.warn('Error al guardar tabla de amortización:', pdfError);
+      // No bloquear el flujo si falla el PDF
+    }
+
+    // Subir documentos del usuario
     const docTypeMap: Record<string, string> = {
       cedula: 'cedula',
       utility: 'utility_bill',

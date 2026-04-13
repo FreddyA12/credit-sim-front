@@ -264,6 +264,43 @@
               </div>
             </div>
           </TabPanel>
+
+          <!-- TAB 7: Documentos Aprobados -->
+          <TabPanel header="Documentos Aprobados" value="6">
+            <div v-if="approvedDocuments.length > 0" class="space-y-3">
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center gap-2 text-green-900">
+                  <i class="pi pi-check-circle text-xl"></i>
+                  <div>
+                    <p class="font-medium">Documentos generados automáticamente</p>
+                    <p class="text-sm text-green-700">Se generaron {{ approvedDocuments.length }} documentos al aprobar este crédito</p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-for="doc in approvedDocuments" :key="doc.id" class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition">
+                <div class="flex items-center gap-4 flex-1">
+                  <i class="pi pi-file-pdf text-3xl text-red-600"></i>
+                  <div class="flex-1">
+                    <p class="font-medium text-gray-900">{{ doc.documentName }}</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      <span class="bg-gray-100 px-2 py-1 rounded mr-2">{{ formatDocumentType(doc.documentType) }}</span>
+                      <span>{{ formatFileSize(doc.fileSize) }} • {{ new Date(doc.createdAt).toLocaleDateString('es-EC') }}</span>
+                    </p>
+                    <p v-if="doc.legalNote" class="text-xs text-gray-600 mt-2 italic">{{ doc.legalNote }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <Button icon="pi pi-download" severity="primary" text rounded @click="downloadApprovedDocument(doc)" title="Descargar" />
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-8">
+              <i class="pi pi-inbox text-4xl text-gray-300 mb-4 block"></i>
+              <p class="text-gray-500">No hay documentos aprobados</p>
+              <p class="text-sm text-gray-400 mt-1">Los documentos se generarán automáticamente al aprobar el crédito</p>
+            </div>
+          </TabPanel>
         </TabView>
       </div>
     </Dialog>
@@ -308,6 +345,7 @@ const docPreviewVisible = ref(false);
 const selected = ref<any>(null);
 const previewDoc = ref<any>(null);
 const savingDecision = ref(false);
+const approvedDocuments = ref<any[]>([]);
 
 const decisionForm = ref({ status: '', notes: '' });
 
@@ -366,6 +404,7 @@ function openDocumentPreview(doc: any) {
 function resetDetail() {
   selected.value = null;
   decisionForm.value = { status: '', notes: '' };
+  approvedDocuments.value = [];
 }
 
 async function saveDecision() {
@@ -415,6 +454,20 @@ async function openDetail(data: any) {
     const { data: fullDetails } = await api.get(`/credit-applications/${data.id}`);
     selected.value = fullDetails;
     decisionForm.value = { status: fullDetails.status || '', notes: fullDetails.notes || '' };
+    
+    // Cargar documentos aprobados si el crédito está aprobado
+    if (fullDetails.status === 'approved') {
+      try {
+        const { data: docs } = await api.get(`/credit-applications/${data.id}/approved-documents`);
+        approvedDocuments.value = docs;
+      } catch (error) {
+        console.warn('No se pudieron cargar documentos aprobados');
+        approvedDocuments.value = [];
+      }
+    } else {
+      approvedDocuments.value = [];
+    }
+    
     detailVisible.value = true;
   } catch (error: any) {
     toast.add({ severity: 'error', summary: 'Error al cargar detalles', detail: error.response?.data?.message, life: 3000 });
@@ -427,6 +480,38 @@ async function updateStatus(app: any) {
     toast.add({ severity: 'success', summary: 'Estado actualizado', life: 2000 });
   } catch {
     toast.add({ severity: 'error', summary: 'Error al actualizar estado', life: 3000 });
+  }
+}
+
+function formatDocumentType(type: string): string {
+  const typeMap: Record<string, string> = {
+    'carta_aprobacion': 'Carta de Aprobación',
+    'contrato_credito': 'Contrato de Crédito',
+    'tabla_amortizacion': 'Tabla de Amortización',
+    'comprobante_desembolso': 'Comprobante de Desembolso',
+    'certificado_no_adeudar': 'Certificado de No Adeudo',
+  };
+  return typeMap[type] || type;
+}
+
+async function downloadApprovedDocument(doc: any) {
+  try {
+    const response = await api.get(`/credit-applications/approved-documents/${doc.id}/download`, {
+      responseType: 'blob'
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${doc.documentName}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    toast.add({ severity: 'success', summary: 'Documento descargado', life: 2000 });
+  } catch (error: any) {
+    toast.add({ severity: 'error', summary: 'Error al descargar documento', detail: error.response?.data?.message, life: 3000 });
   }
 }
 </script>
