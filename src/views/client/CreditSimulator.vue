@@ -164,11 +164,11 @@ async function simulate() {
   if (t) {
     if (form.value.amount < t.minAmount || form.value.amount > t.maxAmount) {
       form.value.amount = Math.min(Math.max(form.value.amount, t.minAmount), t.maxAmount);
-      return toast.add({ severity: 'warn', summary: `Monto debe estar entre $${t.minAmount} y $${t.maxAmount}`, life: 3000 });
+      toast.add({ severity: 'info', summary: `Monto ajustado al rango $${t.minAmount} — $${t.maxAmount}`, life: 3000 });
     }
     if (form.value.termMonths < t.minTermMonths || form.value.termMonths > t.maxTermMonths) {
       form.value.termMonths = Math.min(Math.max(form.value.termMonths, t.minTermMonths), t.maxTermMonths);
-      return toast.add({ severity: 'warn', summary: `Plazo debe estar entre ${t.minTermMonths} y ${t.maxTermMonths} meses`, life: 3000 });
+      toast.add({ severity: 'info', summary: `Plazo ajustado al rango ${t.minTermMonths} — ${t.maxTermMonths} meses`, life: 3000 });
     }
   }
   loading.value = true;

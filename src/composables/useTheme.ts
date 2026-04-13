@@ -119,12 +119,12 @@ export function useTheme() {
         color: ${institution.primaryColor} !important;
       }
 
-      /* Links y elementos secundarios */
-      a, .link-color {
+      /* Links y elementos secundarios (excluye navegación del sidebar) */
+      a:not(.sb-link):not(.sb-logout), .link-color {
         color: ${institution.primaryColor} !important;
       }
 
-      a:hover, .link-color:hover {
+      a:not(.sb-link):not(.sb-logout):hover, .link-color:hover {
         color: ${adjustBrightness(institution.primaryColor, -15)} !important;
       }
 
@@ -281,12 +281,12 @@ export function useTheme() {
         color: ${institution.primaryColor} !important;
       }
 
-      /* Links y elementos secundarios */
-      a, .link-color {
+      /* Links y elementos secundarios (excluye navegación del sidebar) */
+      a:not(.sb-link):not(.sb-logout), .link-color {
         color: ${institution.primaryColor} !important;
       }
 
-      a:hover, .link-color:hover {
+      a:not(.sb-link):not(.sb-logout):hover, .link-color:hover {
         color: ${adjustBrightness(institution.primaryColor, -15)} !important;
       }
 

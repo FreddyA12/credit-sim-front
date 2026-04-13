@@ -12,7 +12,14 @@ import './assets/main.css';
 const app = createApp(App);
 app.use(createPinia());
 app.use(router);
-app.use(PrimeVue, { theme: { preset: Aura } });
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: '.app-dark-mode-disabled',
+    },
+  },
+});
 app.use(ToastService);
 app.use(ConfirmationService);
 app.mount('#app');
