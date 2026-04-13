@@ -10,8 +10,9 @@
       <p class="font-semibold mb-1"><i class="pi pi-info-circle mr-1"></i>Cobros regulados por ley</p>
       <ul class="list-disc ml-5 space-y-1">
         <li><strong>SOLCA (0.5%)</strong> se calcula automáticamente al desembolso para todos los créditos (COMF Disposición General 14ª). No necesita configurarse aquí.</li>
-        <li v-if="isMortgageSegment"><strong>Seguro de Desgravamen</strong> y <strong>Seguro de Incendio y Terremoto</strong> son obligatorios para este segmento y se crean automáticamente. Solo puede modificar la tasa.</li>
-        <li v-else><strong>Seguro de Desgravamen</strong> es opcional para este segmento. El <strong>Seguro de Incendio y Terremoto</strong> no aplica a este tipo de crédito.</li>
+        <li><strong>Seguro de Desgravamen</strong> es obligatorio para todos los créditos y se crea automáticamente (Art. 210 COMF). No es modificable.</li>
+        <li v-if="isMortgageSegment"><strong>Seguro de Incendio y Terremoto</strong> es obligatorio para este segmento y se crea automáticamente (Art. 308 COMF). No es modificable.</li>
+        <li v-else>El <strong>Seguro de Incendio y Terremoto</strong> no aplica a este tipo de crédito.</li>
       </ul>
     </div>
 
@@ -62,7 +63,7 @@
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Valor (tasa %)</label>
-          <InputNumber v-model="form.value" :minFractionDigits="4" :min="0" fluid />
+          <InputNumber v-model="form.value" :minFractionDigits="4" :min="0" fluid :disabled="isInsuranceType && form.mandatory" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Momento de cobro</label>
@@ -77,19 +78,19 @@
           <label class="text-sm">Obligatorio</label>
         </div>
         <div class="flex items-center gap-2">
-          <Checkbox v-model="form.active" :binary="true" />
+          <Checkbox v-model="form.active" :binary="true" :disabled="isInsuranceType && form.mandatory" />
           <label class="text-sm">Activo</label>
         </div>
 
         <div v-if="isInsuranceType" class="col-span-2 bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
           <i class="pi pi-lock mr-1"></i>
-          <span v-if="form.chargeType === 'life_insurance'">Seguro de Desgravamen: por normativa se cobra por cuota sobre saldo vigente (Art. 210 COMF). Solo puede modificar la tasa.</span>
-          <span v-else>Seguro de Incendio y Terremoto: por normativa se cobra por cuota sobre saldo vigente (Art. 308 COMF). Solo puede modificar la tasa.</span>
+          <span v-if="form.chargeType === 'life_insurance'">Seguro de Desgravamen: obligatorio por normativa, se cobra por cuota sobre saldo vigente (Art. 210 COMF). Tasa y parámetros fijados por ley.</span>
+          <span v-else>Seguro de Incendio y Terremoto: obligatorio para créditos hipotecarios, se cobra por cuota sobre saldo vigente (Art. 308 COMF). Tasa y parámetros fijados por ley.</span>
         </div>
 
         <div class="flex flex-col gap-1 col-span-2">
           <label class="text-sm font-medium">Nota legal</label>
-          <Textarea v-model="form.legalNote" rows="3" class="w-full" />
+          <Textarea v-model="form.legalNote" rows="3" class="w-full" :disabled="isInsuranceType && form.mandatory" />
         </div>
         <div class="col-span-2 flex justify-end gap-2">
           <Button label="Cancelar" severity="secondary" @click="dialogVisible = false" />
