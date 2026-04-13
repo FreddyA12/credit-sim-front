@@ -1039,7 +1039,11 @@ async function submit() {
           name: c.name,
           amount: c.amount,
           legalNote: c.legalNote,
-        }))
+        })),
+        {
+          name: form.value.clientName,
+          cedula: form.value.idNumber,
+        }
       );
       const pdfFile = new File([pdfBlob], `tabla-amortizacion-${app.id}.pdf`, { type: 'application/pdf' });
       const fd = new FormData();
